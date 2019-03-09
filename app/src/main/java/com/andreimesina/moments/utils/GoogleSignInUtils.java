@@ -13,9 +13,10 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 public class GoogleSignInUtils {
 
 
-    public static GoogleSignInOptions getSignInOptionsProfileEmail() {
+    public static GoogleSignInOptions getSignInOptionsProfileEmail(String webClientId) {
         return new GoogleSignInOptions
                 .Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(webClientId)
                 .requestProfile()
                 .requestEmail()
                 .build();

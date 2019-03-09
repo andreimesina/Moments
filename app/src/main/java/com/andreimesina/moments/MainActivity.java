@@ -45,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
     private static final String ABOUT_US_FRAGMENT = "about us";
     private static final String CONTACT_FRAGMENT = "contact";
 
+    private FirebaseAuth mAuth;
+
     private GoogleSignInOptions mGoogleSignInOptions;
     private GoogleSignInClient mGoogleSignInClient;
     private GoogleSignInAccount mGoogleSignInAccount;
@@ -61,13 +63,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        if(getIntent().getExtras() == null) {
-            initGoogle();
-        } else {
-            mGoogleSignInOptions = getIntent().getParcelableExtra("GoogleSignInOptions");
-            mGoogleSignInClient = GoogleSignIn.getClient(this, mGoogleSignInOptions);
-            mGoogleSignInAccount = getIntent().getParcelableExtra("GoogleSignInAccount");
-        }
+        initFirebase();
+        initGoogle();
 
         // Starting screen with "moments"
         HomeFragment homeFragment = new HomeFragment();
@@ -157,21 +154,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void btnSignOutOnClick(View view) {
-        if(isSignedWithGoogle()) {
-            if(mGoogleSignInClient != null) {
-                mGoogleSignInClient.signOut().addOnCompleteListener(new OnCompleteListener<Void>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Void> task) {
-                        finishAffinity();
-                        ActivityUtils.goToActivity(MainActivity.this, LoginActivity.class);
-                    }
-                });
+        if(isSignedIn()) {
+
+            if(mAuth.getCurrentUser() != null) {
+                mAuth.signOut();
             }
-        } else {
-            FirebaseAuth.getInstance().signOut();
-            finishAffinity();
-            ActivityUtils.goToActivity(this, LoginActivity.class);
+
+            if(mGoogleSignInClient != null && mGoogleSignInAccount != null) {
+                mGoogleSignInClient.signOut();
+            }
         }
+
+        finishAffinity();
+        ActivityUtils.goToActivity(MainActivity.this, LoginActivity.class);
     }
 
     private boolean checkPermission() {
@@ -183,8 +178,12 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    private void initFirebase() {
+        mAuth = FirebaseAuth.getInstance();
+    }
+
     private void initGoogle() {
-        mGoogleSignInOptions = GoogleSignInUtils.getSignInOptionsProfileEmail();
+        mGoogleSignInOptions = GoogleSignInUtils.getSignInOptionsProfileEmail(getString(R.string.web_client_id));
         mGoogleSignInClient = GoogleSignIn.getClient(this, mGoogleSignInOptions);
         mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
     }
@@ -222,8 +221,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private boolean isSignedWithGoogle() {
-        if(mGoogleSignInAccount != null) {
+    private boolean isSignedIn() {
+        if(mGoogleSignInAccount != null || mAuth.getCurrentUser() != null) {
             return true;
         }
 

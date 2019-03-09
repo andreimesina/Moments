@@ -30,8 +30,10 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.GoogleAuthProvider;
 
 import static com.andreimesina.moments.R.id;
 import static com.andreimesina.moments.R.layout;
@@ -63,9 +65,9 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(layout.activity_login);
 
         // init class members
+        setViews();
         initFirebase();
         initGoogleSign();
-        setViews();
 
         // listen for actions on screen
         listenForGoogleSignBtn();
@@ -80,10 +82,10 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
 
-        if(mGoogleSignInAccount != null) {
-            ActivityUtils.goToActivity(LoginActivity.this, MainActivity.class);
+        // check for logged in state
+        if(isLoggedIn()) {
+            ActivityUtils.goToActivity(this, MainActivity.class);
         }
     }
 
@@ -102,17 +104,18 @@ public class LoginActivity extends AppCompatActivity {
         if(requestCode == GOOGLE_SIGN_IN) {
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
             handleGoogleSignInResult(task);
-            setButtonFinishedProgress(mBtnGoogleSign, GOOGLE_BUTTON_TEXT, mProgressBarGoogle);
-            enableButton(mBtnGoogleSign);
         }
     }
 
     private void handleGoogleSignInResult(Task<GoogleSignInAccount> completedTask) {
         try {
             mGoogleSignInAccount = completedTask.getResult(ApiException.class);
-            proceedToApp(mGoogleSignInOptions, mGoogleSignInAccount);
+            firebaseAuthWithGoogle(mGoogleSignInAccount);
         } catch(ApiException e) {
             Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
+        } finally {
+            setButtonFinishedProgress(mBtnGoogleSign, GOOGLE_BUTTON_TEXT, mProgressBarGoogle);
+            enableButton(mBtnGoogleSign);
         }
     }
 
@@ -121,7 +124,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void initGoogleSign() {
-        mGoogleSignInOptions = GoogleSignInUtils.getSignInOptionsProfileEmail();
+        mGoogleSignInOptions = GoogleSignInUtils.getSignInOptionsProfileEmail(getString(R.string.web_client_id));
         mGoogleSignInClient = GoogleSignIn.getClient(this, mGoogleSignInOptions);
     }
 
@@ -134,6 +137,10 @@ public class LoginActivity extends AppCompatActivity {
         mProgressBarGoogle = findViewById(id.progress_google_sign);
         mBtnRegister = findViewById(id.btn_reg_sign);
         mBtnForgotPass = findViewById(id.btn_forgot_pass_sign);
+    }
+
+    private boolean isLoggedIn() {
+        return mAuth.getCurrentUser() != null;
     }
 
     private void signInWithEmailAndPass(String email, String pass) {
@@ -157,6 +164,25 @@ public class LoginActivity extends AppCompatActivity {
                 setButtonFinishedProgress(mBtnSignIn, buttonText, mProgressBar);
             }
         });
+    }
+
+    private void firebaseAuthWithGoogle(GoogleSignInAccount account) {
+        Log.d(TAG, "firebaseAuthWithGoogle: " + account.getId());
+
+        AuthCredential credential = GoogleAuthProvider
+                .getCredential(account.getIdToken(), null);
+        mAuth.signInWithCredential(credential)
+                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if(task.isSuccessful()) {
+                            ActivityUtils.goToActivity(LoginActivity.this,
+                                    MainActivity.class);
+                        } else {
+                            showPasswordForgottenAlertDialog();
+                        }
+                    }
+                });
     }
 
     private void proceedToApp(GoogleSignInOptions options, GoogleSignInAccount account) {

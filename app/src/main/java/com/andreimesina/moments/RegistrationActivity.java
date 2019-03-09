@@ -33,8 +33,10 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.GoogleAuthProvider;
 
 public class RegistrationActivity extends AppCompatActivity {
 
@@ -66,7 +68,6 @@ public class RegistrationActivity extends AppCompatActivity {
         initGoogleSign();
         setViews();
 
-
         // listen for screen actions
         listenForGoogleSignBtn();
         //listenForKeyboardState();
@@ -78,10 +79,10 @@ public class RegistrationActivity extends AppCompatActivity {
     @Override
     protected void onStart() {
         super.onStart();
-        mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
 
-        if(mGoogleSignInAccount != null) {
-            ActivityUtils.goToActivity(RegistrationActivity.this, MainActivity.class);
+        // check for logged in state
+        if(isLoggedIn()) {
+            ActivityUtils.goToActivity(this, MainActivity.class);
         }
     }
 
@@ -100,17 +101,18 @@ public class RegistrationActivity extends AppCompatActivity {
         if(requestCode == GOOGLE_SIGN_IN) {
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
             handleGoogleSignInResult(task);
-            setButtonFinishedProgress(mBtnGoogleSign, GOOGLE_BUTTON_TEXT, mProgressBarGoogle);
-            enableButton(mBtnGoogleSign);
         }
     }
 
     private void handleGoogleSignInResult(Task<GoogleSignInAccount> completedTask) {
         try {
             mGoogleSignInAccount = completedTask.getResult(ApiException.class);
-            proceedToApp(mGoogleSignInOptions, mGoogleSignInAccount);
+            firebaseAuthWithGoogle(mGoogleSignInAccount);
         } catch(ApiException e) {
             Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
+        } finally {
+            setButtonFinishedProgress(mBtnGoogleSign, GOOGLE_BUTTON_TEXT, mProgressBarGoogle);
+            enableButton(mBtnGoogleSign);
         }
     }
 
@@ -119,7 +121,7 @@ public class RegistrationActivity extends AppCompatActivity {
     }
 
     private void initGoogleSign() {
-        mGoogleSignInOptions = GoogleSignInUtils.getSignInOptionsProfileEmail();
+        mGoogleSignInOptions = GoogleSignInUtils.getSignInOptionsProfileEmail(getString(R.string.web_client_id));
         mGoogleSignInClient = GoogleSignIn.getClient(this, mGoogleSignInOptions);
     }
 
@@ -133,6 +135,14 @@ public class RegistrationActivity extends AppCompatActivity {
         mProgressBarGoogle = findViewById(R.id.progress_google_reg);
         mBtnConfirm = findViewById(R.id.btn_confirm_reg);
         mProgressBar = findViewById(R.id.progress_reg);
+    }
+
+    private boolean isLoggedIn() {
+        if(mAuth.getCurrentUser() != null || mGoogleSignInAccount != null) {
+            return true;
+        }
+
+        return false;
     }
 
     private void registerWithEmailAndPass(String email, String pass) {
@@ -173,6 +183,25 @@ public class RegistrationActivity extends AppCompatActivity {
         }
 
         return true;
+    }
+
+    private void firebaseAuthWithGoogle(GoogleSignInAccount account) {
+        Log.d(TAG, "firebaseAuthWithGoogle: " + account.getId());
+
+        AuthCredential credential = GoogleAuthProvider
+                .getCredential(account.getIdToken(), null);
+        mAuth.signInWithCredential(credential)
+                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if(task.isSuccessful()) {
+                            ActivityUtils.goToActivity(RegistrationActivity.this,
+                                    MainActivity.class);
+                        } else {
+                            showBadEmailAlertDialog();
+                        }
+                    }
+                });
     }
 
     private void proceedToApp(GoogleSignInOptions options, GoogleSignInAccount account) {
