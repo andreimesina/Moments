@@ -21,11 +21,20 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.andreimesina.moments.fragments.AboutUsFragment;
 import com.andreimesina.moments.fragments.ContactFragment;
 import com.andreimesina.moments.fragments.HomeFragment;
+import com.andreimesina.moments.utils.ActivityUtils;
+import com.andreimesina.moments.utils.GoogleSignInUtils;
 import com.andreimesina.moments.utils.SharedPreferencesUtils;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity {
@@ -35,6 +44,11 @@ public class MainActivity extends AppCompatActivity {
 //    private static final String FAVOURITE_FRAGMENT = "favourite";
     private static final String ABOUT_US_FRAGMENT = "about us";
     private static final String CONTACT_FRAGMENT = "contact";
+
+    private GoogleSignInOptions mGoogleSignInOptions;
+    private GoogleSignInClient mGoogleSignInClient;
+    private GoogleSignInAccount mGoogleSignInAccount;
+
 
     private static final int PERMISSION_REQUEST_CODE = 200;
     private static final int REQUEST_IMAGE_CAPTURE = 1;
@@ -46,6 +60,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        if(getIntent().getExtras() == null) {
+            initGoogle();
+        } else {
+            mGoogleSignInOptions = getIntent().getParcelableExtra("GoogleSignInOptions");
+            mGoogleSignInClient = GoogleSignIn.getClient(this, mGoogleSignInOptions);
+            mGoogleSignInAccount = getIntent().getParcelableExtra("GoogleSignInAccount");
+        }
 
         // Starting screen with "moments"
         HomeFragment homeFragment = new HomeFragment();
@@ -126,14 +148,30 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void btnLogOutOnClick(View view) {
-        FirebaseAuth.getInstance().signOut();
-        SharedPreferencesUtils.deleteValueFromSharedPreferences(MainActivity.this, "Email");
-        SharedPreferencesUtils.setBooleanValueInSharedPreferences(MainActivity.this, "Authenticated", false);
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
 
-        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-        finishAffinity();
-        startActivity(intent);
+        // sync navigation icon state
+        mDrawerToggle.syncState();
+    }
+
+    public void btnSignOutOnClick(View view) {
+        if(isSignedWithGoogle()) {
+            if(mGoogleSignInClient != null) {
+                mGoogleSignInClient.signOut().addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        finishAffinity();
+                        ActivityUtils.goToActivity(MainActivity.this, LoginActivity.class);
+                    }
+                });
+            }
+        } else {
+            FirebaseAuth.getInstance().signOut();
+            finishAffinity();
+            ActivityUtils.goToActivity(this, LoginActivity.class);
+        }
     }
 
     private boolean checkPermission() {
@@ -143,6 +181,12 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
         return true;
+    }
+
+    private void initGoogle() {
+        mGoogleSignInOptions = GoogleSignInUtils.getSignInOptionsProfileEmail();
+        mGoogleSignInClient = GoogleSignIn.getClient(this, mGoogleSignInOptions);
+        mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
     }
 
     private void requestPermission() {
@@ -178,12 +222,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
+    private boolean isSignedWithGoogle() {
+        if(mGoogleSignInAccount != null) {
+            return true;
+        }
 
-        // sync navigation icon state
-        mDrawerToggle.syncState();
+        return false;
     }
 
     @Override

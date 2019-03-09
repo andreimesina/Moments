@@ -2,8 +2,8 @@ apply plugin: 'com.android.application'
 
 // app version
 ext.majorVersion = 0
-ext.minorVersion = 3
-ext.patchVersion = 0
+ext.minorVersion = 4
+ext.patchVersion = 3
 ext.preRelease = "alpha.1"
 
 // sdk and tools
@@ -59,10 +59,11 @@ dependencies {
     implementation "com.android.support:design:$project.supportLibraryVersion"
     implementation 'de.hdodenhof:circleimageview:3.0.0'
 
-    // firebase
+    // Firebase
     implementation "com.google.firebase:firebase-core:16.0.7"
     implementation "com.google.firebase:firebase-auth:16.1.0"
 
+    // Google Play services
     implementation 'com.google.android.gms:play-services-auth:16.0.1'
 
     testImplementation "junit:junit:$project.jUnitVersion"

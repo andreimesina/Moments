@@ -7,12 +7,14 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.KeyEvent;
 import android.view.View;
@@ -22,6 +24,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 
+import com.andreimesina.moments.utils.ActivityUtils;
+import com.andreimesina.moments.utils.GoogleSignInUtils;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -29,12 +38,21 @@ import com.google.firebase.auth.FirebaseAuth;
 
 public class RegistrationActivity extends AppCompatActivity {
 
+    private static final String TAG = "RegistrationActivity";
+    private static final Integer GOOGLE_SIGN_IN = 1;
+    private static final String GOOGLE_BUTTON_TEXT = "Continue with Google";
+
     private FirebaseAuth mAuth;
+
+    private GoogleSignInOptions mGoogleSignInOptions;
+    private GoogleSignInClient mGoogleSignInClient;
+    private GoogleSignInAccount mGoogleSignInAccount;
 
     private EditText mEditTextEmail;
     private EditText mEditTextPassword;
     private EditText mEditTextPasswordConfirm;
     private Button mBtnGoogleSign;
+    private ProgressBar mProgressBarGoogle;
     private Button mBtnConfirm;
     private ProgressBar mProgressBar;
 
@@ -44,13 +62,58 @@ public class RegistrationActivity extends AppCompatActivity {
         setContentView(R.layout.activity_registration);
 
         // init views class members
+        initFirebase();
+        initGoogleSign();
         setViews();
 
+
         // listen for screen actions
-//        listenForKeyboardState();
+        listenForGoogleSignBtn();
+        //listenForKeyboardState();
         listenForKeyboardDoneBtn();
         listenForConfirmBtn();
         listenForModifiedCredentials();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
+
+        if(mGoogleSignInAccount != null) {
+            ActivityUtils.goToActivity(RegistrationActivity.this, MainActivity.class);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // Result returned from GoogleSignInClient.getSignInIntent...
+        if(requestCode == GOOGLE_SIGN_IN) {
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            handleGoogleSignInResult(task);
+            setButtonFinishedProgress(mBtnGoogleSign, GOOGLE_BUTTON_TEXT, mProgressBarGoogle);
+            enableButton(mBtnGoogleSign);
+        }
+    }
+
+    private void handleGoogleSignInResult(Task<GoogleSignInAccount> completedTask) {
+        try {
+            mGoogleSignInAccount = completedTask.getResult(ApiException.class);
+            proceedToApp(mGoogleSignInOptions, mGoogleSignInAccount);
+        } catch(ApiException e) {
+            Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
+        }
+    }
+
+    private void initFirebase() {
+        mAuth = FirebaseAuth.getInstance();
+    }
+
+    private void initGoogleSign() {
+        mGoogleSignInOptions = GoogleSignInUtils.getSignInOptionsProfileEmail();
+        mGoogleSignInClient = GoogleSignIn.getClient(this, mGoogleSignInOptions);
     }
 
     private void setViews() {
@@ -60,12 +123,14 @@ public class RegistrationActivity extends AppCompatActivity {
         mEditTextPassword = findViewById(R.id.et_pass_reg);
         mEditTextPasswordConfirm = findViewById(R.id.et_pass_confirm_reg);
         mBtnGoogleSign = findViewById(R.id.btn_google_reg);
+        mProgressBarGoogle = findViewById(R.id.progress_google_reg);
         mBtnConfirm = findViewById(R.id.btn_confirm_reg);
         mProgressBar = findViewById(R.id.progress_reg);
     }
 
     private void registerWithEmailAndPass(String email, String pass) {
-        setButtonConfirmProgress();
+        final String buttonText = mBtnConfirm.getText().toString();
+        setButtonInProgress(mBtnConfirm, mProgressBar);
         hideKeyboard();
         clearFocus();
 
@@ -74,13 +139,14 @@ public class RegistrationActivity extends AppCompatActivity {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if(task.isSuccessful()) {
-                            proceedToApp();
+                            ActivityUtils.goToActivity(RegistrationActivity.this,
+                                    MainActivity.class);
                         } else {
                             clearPasswordFields();
                             disableButton(mBtnConfirm);
                         }
 
-                        setButtonConfirmFinishedProgress();
+                        setButtonFinishedProgress(mBtnConfirm, buttonText, mProgressBar);
                     }
                 });
     }
@@ -102,8 +168,11 @@ public class RegistrationActivity extends AppCompatActivity {
         return true;
     }
 
-    private void proceedToApp() {
+    private void proceedToApp(GoogleSignInOptions options, GoogleSignInAccount account) {
         Intent intent = new Intent(RegistrationActivity.this, MainActivity.class);
+        intent.putExtra("GoogleSignInOptions", options);
+        intent.putExtra("GoogleSignInAccount", account);
+
         startActivity(intent);
     }
 
@@ -163,14 +232,15 @@ public class RegistrationActivity extends AppCompatActivity {
         view.setVisibility(View.VISIBLE);
     }
 
-    private void setButtonConfirmProgress() {
-        mBtnConfirm.setText("");
-        mProgressBar.setVisibility(View.VISIBLE);
+    private void setButtonInProgress(@NonNull Button button, @NonNull ProgressBar progress) {
+        button.setText("");
+        progress.setVisibility(View.VISIBLE);
     }
 
-    private void setButtonConfirmFinishedProgress() {
-        mProgressBar.setVisibility(View.GONE);
-        mBtnConfirm.setText("Confirm");
+    private void setButtonFinishedProgress(@NonNull Button button, @NonNull String text,
+                                                 @NonNull ProgressBar progress) {
+        progress.setVisibility(View.GONE);
+        button.setText(text);
     }
 
     private void clearPasswordFields() {
@@ -235,6 +305,19 @@ public class RegistrationActivity extends AppCompatActivity {
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
+    }
+
+    private void listenForGoogleSignBtn() {
+        mBtnGoogleSign.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                disableButton(mBtnGoogleSign);
+                setButtonInProgress(mBtnGoogleSign, mProgressBarGoogle);
+
+                GoogleSignInUtils.signInWithGoogle(RegistrationActivity.this, mGoogleSignInClient,
+                        GOOGLE_SIGN_IN);
+            }
+        });
     }
 
     private void listenForKeyboardState() {

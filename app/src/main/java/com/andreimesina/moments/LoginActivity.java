@@ -1,28 +1,33 @@
 package com.andreimesina.moments;
 
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.DisplayMetrics;
-import android.util.TypedValue;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.andreimesina.moments.utils.ActivityUtils;
+import com.andreimesina.moments.utils.GoogleSignInUtils;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -33,70 +38,125 @@ import static com.andreimesina.moments.R.layout;
 
 public class LoginActivity extends AppCompatActivity {
 
+    private static final String TAG = "LoginActivity";
+    private static final Integer GOOGLE_SIGN_IN = 1;
+    private static final String GOOGLE_BUTTON_TEXT = "Continue with Google";
+
     private FirebaseAuth mAuth;
+
+    private GoogleSignInOptions mGoogleSignInOptions;
+    private GoogleSignInClient mGoogleSignInClient;
+    private GoogleSignInAccount mGoogleSignInAccount;
 
     private EditText mEditTextEmail;
     private EditText mEditTextPass;
     private Button mBtnSignIn;
     private ProgressBar mProgressBar;
+    private Button mBtnGoogleSign;
+    private ProgressBar mProgressBarGoogle;
+    private Button mBtnRegister;
+    private Button mBtnForgotPass;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(layout.activity_login);
 
-        // init views class members
+        // init class members
+        initFirebase();
+        initGoogleSign();
         setViews();
 
         // listen for actions on screen
+        listenForGoogleSignBtn();
         listenForKeyboardState();
         listenForKeyboardDoneBtn();
         listenForSignInBtn();
         listenForModifiedCredentials();
         listenForRegisterBtn();
         listenForForgotPassBtn();
+    }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
 
+        if(mGoogleSignInAccount != null) {
+            ActivityUtils.goToActivity(LoginActivity.this, MainActivity.class);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // Result returned from GoogleSignInClient.getSignInIntent...
+        if(requestCode == GOOGLE_SIGN_IN) {
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            handleGoogleSignInResult(task);
+            setButtonFinishedProgress(mBtnGoogleSign, GOOGLE_BUTTON_TEXT, mProgressBarGoogle);
+            enableButton(mBtnGoogleSign);
+        }
+    }
+
+    private void handleGoogleSignInResult(Task<GoogleSignInAccount> completedTask) {
+        try {
+            mGoogleSignInAccount = completedTask.getResult(ApiException.class);
+            proceedToApp(mGoogleSignInOptions, mGoogleSignInAccount);
+        } catch(ApiException e) {
+            Log.w(TAG, "signInResult:failed code=" + e.getStatusCode());
+        }
+    }
+
+    private void initFirebase() {
+        mAuth = FirebaseAuth.getInstance();
+    }
+
+    private void initGoogleSign() {
+        mGoogleSignInOptions = GoogleSignInUtils.getSignInOptionsProfileEmail();
+        mGoogleSignInClient = GoogleSignIn.getClient(this, mGoogleSignInOptions);
     }
 
     private void setViews() {
-        mAuth = FirebaseAuth.getInstance();
-
         mEditTextEmail = findViewById(id.et_email_sign);
         mEditTextPass = findViewById(id.et_password_sign);
         mBtnSignIn = findViewById(id.btn_sign);
         mProgressBar = findViewById(id.progress_sign);
+        mBtnGoogleSign = findViewById(id.btn_google_sign);
+        mProgressBarGoogle = findViewById(id.progress_google_sign);
+        mBtnRegister = findViewById(id.btn_reg_sign);
+        mBtnForgotPass = findViewById(id.btn_forgot_pass_sign);
     }
 
     private void signInWithEmailAndPass(String email, String pass) {
-        setButtonSignInProgress(mBtnSignIn);
-        hideKeyboard();
-        clearFocus();
+        final String buttonText = mBtnSignIn.getText().toString();
+        setButtonInProgress(mBtnSignIn, mProgressBar);
+        ActivityUtils.hideKeyboard(this);
+        ActivityUtils.clearFocus(this);
 
         mAuth.signInWithEmailAndPassword(email, pass).addOnCompleteListener(
                 new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if(task.isSuccessful()) {
-                    proceedToApp();
+                    ActivityUtils.goToActivity(LoginActivity.this, MainActivity.class);
                 } else {
                     showPasswordForgottenAlertDialog();
                     clearPasswordField();
                     disableButton(mBtnSignIn);
                 }
 
-                setButtonSignInFinishedProgress(mBtnSignIn);
+                setButtonFinishedProgress(mBtnSignIn, buttonText, mProgressBar);
             }
         });
     }
 
-    private void proceedToApp() {
+    private void proceedToApp(GoogleSignInOptions options, GoogleSignInAccount account) {
         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-        startActivity(intent);
-    }
+        intent.putExtra("GoogleSignInOptions", options);
+        intent.putExtra("GoogleSignInAccount", account);
 
-    private void proceedToRegistration() {
-        Intent intent = new Intent(LoginActivity.this, RegistrationActivity.class);
         startActivity(intent);
     }
 
@@ -129,14 +189,15 @@ public class LoginActivity extends AppCompatActivity {
         button.setVisibility(View.GONE);
     }
 
-    private void setButtonSignInProgress(@NonNull Button button) {
+    private void setButtonInProgress(@NonNull Button button, @NonNull ProgressBar progress) {
         button.setText("");
-        mProgressBar.setVisibility(View.VISIBLE);
+        progress.setVisibility(View.VISIBLE);
     }
 
-    private void setButtonSignInFinishedProgress(@NonNull Button button) {
-        mProgressBar.setVisibility(View.GONE);
-        button.setText("Sign in");
+    private void setButtonFinishedProgress(@NonNull Button button, @NonNull String text,
+                                                 @NonNull ProgressBar progress) {
+        progress.setVisibility(View.GONE);
+        button.setText(text);
     }
 
     private void clearPasswordField() {
@@ -163,21 +224,17 @@ public class LoginActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private void clearFocus() {
-        View view = this.getCurrentFocus();
+    private void listenForGoogleSignBtn() {
+        mBtnGoogleSign.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                disableButton(mBtnGoogleSign);
+                setButtonInProgress(mBtnGoogleSign, mProgressBarGoogle);
 
-        if(view != null) {
-            view.clearFocus();
-        }
-    }
-
-    private void hideKeyboard() {
-        View view = this.getCurrentFocus();
-
-        if(view != null) {
-            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-        }
+                GoogleSignInUtils.signInWithGoogle(LoginActivity.this, mGoogleSignInClient,
+                        GOOGLE_SIGN_IN);
+            }
+        });
     }
 
     private void listenForKeyboardState() {
@@ -187,16 +244,12 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onGlobalLayout() {
                 int heightDiff = activityRootView.getRootView().getHeight() - activityRootView.getHeight();
-                if (heightDiff > dpToPx(LoginActivity.this, 200)) {
-                    Button btn = findViewById(id.btn_reg_sign);
-                    disableTextButton(btn);
-                    btn = findViewById(id.btn_forgot_pass_sign);
-                    disableTextButton(btn);
+                if (heightDiff > ActivityUtils.dpToPx(LoginActivity.this, 200)) {
+                    disableTextButton(mBtnRegister);
+                    disableTextButton(mBtnForgotPass);
                 } else {
-                    Button btn = findViewById(id.btn_reg_sign);
-                    enableTextButton(btn);
-                    btn = findViewById(id.btn_forgot_pass_sign);
-                    enableTextButton(btn);
+                    enableTextButton(mBtnRegister);
+                    enableTextButton(mBtnForgotPass);
                 }
             }
         });
@@ -213,10 +266,9 @@ public class LoginActivity extends AppCompatActivity {
                         && event.getAction() == KeyEvent.ACTION_DOWN
                         && keyCode == KeyEvent.KEYCODE_ENTER
                         && mBtnSignIn.isEnabled()) {
-                    Toast.makeText(LoginActivity.this,"Trying to login...",
-                            Toast.LENGTH_LONG).show();
+
                     if(email.equalsIgnoreCase("admin") && pass.equalsIgnoreCase("123")) {
-                        proceedToApp();
+                        ActivityUtils.goToActivity(LoginActivity.this, MainActivity.class);
                     } else {
                         signInWithEmailAndPass(email, pass);
                     }
@@ -248,7 +300,8 @@ public class LoginActivity extends AppCompatActivity {
         btn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                proceedToRegistration();
+                ActivityUtils.goToActivity(LoginActivity.this,
+                        RegistrationActivity.class);
             }
         });
     }
@@ -290,11 +343,6 @@ public class LoginActivity extends AppCompatActivity {
 
         mEditTextEmail.addTextChangedListener(textWatcher);
         mEditTextPass.addTextChangedListener(textWatcher);
-    }
-
-    public static float dpToPx(Context context, float valueInDp) {
-        DisplayMetrics metrics = context.getResources().getDisplayMetrics();
-        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, valueInDp, metrics);
     }
 
 }
