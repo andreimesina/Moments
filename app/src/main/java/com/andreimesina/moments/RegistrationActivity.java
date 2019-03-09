@@ -86,6 +86,13 @@ public class RegistrationActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        ActivityUtils.clearFocus(this);
+        ActivityUtils.hideKeyboard(this);
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
@@ -131,8 +138,8 @@ public class RegistrationActivity extends AppCompatActivity {
     private void registerWithEmailAndPass(String email, String pass) {
         final String buttonText = mBtnConfirm.getText().toString();
         setButtonInProgress(mBtnConfirm, mProgressBar);
-        hideKeyboard();
-        clearFocus();
+        ActivityUtils.hideKeyboard(this);
+        ActivityUtils.clearFocus(this);
 
         mAuth.createUserWithEmailAndPassword(email, pass)
                 .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
@@ -288,23 +295,6 @@ public class RegistrationActivity extends AppCompatActivity {
             }
         });
         builder.show();
-    }
-
-    private void clearFocus() {
-        View view = this.getCurrentFocus();
-
-        if(view != null) {
-            view.clearFocus();
-        }
-    }
-
-    private void hideKeyboard() {
-        View view = this.getCurrentFocus();
-
-        if(view != null) {
-            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-        }
     }
 
     private void listenForGoogleSignBtn() {

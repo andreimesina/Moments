@@ -88,6 +88,13 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        ActivityUtils.clearFocus(this);
+        ActivityUtils.hideKeyboard(this);
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
