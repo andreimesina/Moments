@@ -2,8 +2,8 @@ apply plugin: 'com.android.application'
 
 // app version
 ext.majorVersion = 0
-ext.minorVersion = 4
-ext.patchVersion = 5
+ext.minorVersion = 5
+ext.patchVersion = 0
 ext.preRelease = "alpha.1"
 
 // sdk and tools

@@ -21,20 +21,16 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Toast;
 
 import com.andreimesina.moments.fragments.AboutUsFragment;
 import com.andreimesina.moments.fragments.ContactFragment;
 import com.andreimesina.moments.fragments.HomeFragment;
 import com.andreimesina.moments.utils.ActivityUtils;
 import com.andreimesina.moments.utils.GoogleSignInUtils;
-import com.andreimesina.moments.utils.SharedPreferencesUtils;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class MainActivity extends AppCompatActivity {

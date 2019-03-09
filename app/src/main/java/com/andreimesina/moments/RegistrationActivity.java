@@ -240,14 +240,14 @@ public class RegistrationActivity extends AppCompatActivity {
         button.setEnabled(false);
         Drawable background = button.getBackground();
         GradientDrawable shape = (GradientDrawable) background;
-        shape.setColor(ContextCompat.getColor(this, R.color.colorAccentDisabled));
+        shape.setColor(ContextCompat.getColor(this, R.color.colorButtonDisabled));
     }
 
     private void enableButton(@NonNull Button button) {
         button.setEnabled(true);
         Drawable background = button.getBackground();
         GradientDrawable shape = (GradientDrawable) background;
-        shape.setColor(ContextCompat.getColor(this, R.color.colorAccent));
+        shape.setColor(ContextCompat.getColor(this, R.color.colorButtonEnabled));
     }
 
     private void hideButton(@NonNull Button button) {
