@@ -3,7 +3,7 @@ apply plugin: 'com.android.application'
 // app version
 ext.majorVersion = 0
 ext.minorVersion = 6
-ext.patchVersion = 0
+ext.patchVersion = 1
 ext.preRelease = "alpha.1"
 
 // sdk and tools
@@ -56,16 +56,18 @@ dependencies {
     implementation "com.android.support:cardview-v7:$project.supportLibraryVersion"
     implementation "com.android.support:design:$project.supportLibraryVersion"
     implementation 'de.hdodenhof:circleimageview:3.0.0'
+
     // Firebase
-    implementation 'com.google.firebase:firebase-core:16.0.7'
-    implementation 'com.google.firebase:firebase-auth:16.1.0'
+    implementation "com.google.firebase:firebase-core:16.0.7"
+    implementation "com.google.firebase:firebase-auth:16.1.0"
+
     // Google Play services
     implementation 'com.google.android.gms:play-services-auth:16.0.1'
+
     testImplementation "junit:junit:$project.jUnitVersion"
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation 'org.jetbrains:annotations-java5:15.0'
-    implementation 'com.squareup.picasso:picasso:2.71828'
 }
 
 apply plugin: 'com.google.gms.google-services'
