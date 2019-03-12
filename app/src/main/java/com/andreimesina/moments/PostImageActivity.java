@@ -16,6 +16,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import java.io.File;
+
 public class PostImageActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String TAG = "PostImageActivity";
@@ -86,8 +88,10 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
 
     private void getImageFromCamera() {
         Intent intent = getIntent();
+
         if(intent != null) {
             Uri imageUri = Uri.parse(String.valueOf(intent.getExtras().get("image_uri")));
+            currentPhotoPath = intent.getExtras().get("image_path").toString();
             Bitmap bitmap = null;
             try {
                 bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
@@ -103,6 +107,11 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
                 mImageView.setImageBitmap(bitmap);
             }
         }
+    }
+
+    private void deleteCurrentPhoto() {
+        File file = new File(currentPhotoPath);
+        file.delete();
     }
 
     private void setButtonsListener() {
@@ -122,8 +131,9 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
 
     @Override
     public void onClick(View v) {
+        Intent intent = new Intent(PostImageActivity.this, MainActivity.class);
+
         if(v.getId() == R.id.btn_save_post) {
-            Intent intent = new Intent(PostImageActivity.this, MainActivity.class);
             if(mEditTextStory.getText().toString() != null) {
                 intent.putExtra("Story", mEditTextStory.getText().toString());
             }
@@ -135,7 +145,7 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
             startActivityForResult(intent, CODE_SAVE);
             finish();
         } else if(v.getId() == R.id.btn_cancel_post) {
-            Intent intent = new Intent(PostImageActivity.this, MainActivity.class);
+            deleteCurrentPhoto();
 
             startActivityForResult(intent, CODE_CANCEL);
             finish();
@@ -145,6 +155,7 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
     @Override
     public void onBackPressed() {
         super.onBackPressed();
+        deleteCurrentPhoto();
         finish();
     }
 }

@@ -176,6 +176,7 @@ public class MainActivity extends AppCompatActivity {
     private void goToPostActivity() {
         Intent intent = new Intent(this, PostImageActivity.class);
         intent.putExtra("image_uri", currentPhotoUri);
+        intent.putExtra("image_path", currentPhotoPath);
 
         startActivity(intent);
     }
