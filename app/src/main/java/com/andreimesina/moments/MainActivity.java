@@ -276,7 +276,6 @@ public class MainActivity extends AppCompatActivity {
                 mDrawerToggle.setDrawerIndicatorEnabled(true);
             } else {
                 mDrawerToggle.setDrawerIndicatorEnabled(false);
-
             }
         }
     }

@@ -5,7 +5,12 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -19,6 +24,9 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
 
     private String currentPhotoPath;
 
+    private DrawerLayout mDrawerLayout;
+    private ActionBarDrawerToggle mDrawerToggle;
+
     private EditText mEditTextStory;
     private EditText mEditTextLocation;
     private ImageView mImageView;
@@ -31,9 +39,18 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
         setContentView(R.layout.activity_post_image);
 
         setViews();
+        initToolbar();
         getImageFromCamera();
         setButtonsListener();
 
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+
+        // sync navigation icon state
+        mDrawerToggle.syncState();
     }
 
     private void setViews() {
@@ -42,6 +59,29 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
         mImageView = findViewById(R.id.image_post);
         mBtnSave = findViewById(R.id.btn_save_post);
         mBtnCancel = findViewById(R.id.btn_cancel_post);
+    }
+
+    private void initToolbar() {
+        // Create toolbar
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        if(toolbar != null) {
+            setSupportActionBar(toolbar);
+        }
+
+        // Add navigation drawer button
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
+
+        setTitle("Save image");
+
+        // Add toggle for a cool animation
+        mDrawerLayout = findViewById(R.id.drawer_layout_post);
+        mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
+                R.string.nav_open, R.string.nav_close);
+        mDrawerToggle.setDrawerIndicatorEnabled(false);
+        mDrawerLayout.addDrawerListener(mDrawerToggle);
     }
 
     private void getImageFromCamera() {
@@ -71,6 +111,16 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
     }
 
     @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if(mDrawerToggle.isDrawerIndicatorEnabled() == false) {
+            onBackPressed();
+            return false;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     public void onClick(View v) {
         if(v.getId() == R.id.btn_save_post) {
             Intent intent = new Intent(PostImageActivity.this, MainActivity.class);
@@ -90,5 +140,11 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
             startActivityForResult(intent, CODE_CANCEL);
             finish();
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        finish();
     }
 }
