@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -13,6 +14,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -33,6 +35,15 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.firebase.auth.FirebaseAuth;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
@@ -41,18 +52,20 @@ public class MainActivity extends AppCompatActivity {
     private static final String ABOUT_US_FRAGMENT = "about us";
     private static final String CONTACT_FRAGMENT = "contact";
 
+    private static final int PERMISSION_REQUEST_CODE = 200;
+    private static final int REQUEST_TAKE_PHOTO = 1;
+
     private FirebaseAuth mAuth;
 
     private GoogleSignInOptions mGoogleSignInOptions;
     private GoogleSignInClient mGoogleSignInClient;
     private GoogleSignInAccount mGoogleSignInAccount;
-
-
-    private static final int PERMISSION_REQUEST_CODE = 200;
-    private static final int REQUEST_IMAGE_CAPTURE = 1;
     
     private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mDrawerToggle;
+
+    private String currentPhotoPath;
+    private Uri currentPhotoUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -133,12 +146,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if(checkPermission()) {
-                    takePictureIntent();
+                    dispatchTakePictureIntent();
                 } else {
                     requestPermission();
                 }
             }
         });
+
     }
 
     @Override
@@ -147,6 +161,26 @@ public class MainActivity extends AppCompatActivity {
 
         // sync navigation icon state
         mDrawerToggle.syncState();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
+            goToPostActivity();
+        } else if(requestCode == PostImageActivity.CODE_CANCEL) {
+            File file = new File(currentPhotoPath);
+            file.delete();
+        } else if(requestCode == PostImageActivity.CODE_SAVE) {
+            // TODO
+        }
+    }
+
+    private void goToPostActivity() {
+        Intent intent = new Intent(this, PostImageActivity.class);
+        intent.putExtra("image_uri", currentPhotoUri);
+
+        startActivity(intent);
     }
 
     public void btnSignOutOnClick(View view) {
@@ -190,10 +224,43 @@ public class MainActivity extends AppCompatActivity {
                 PERMISSION_REQUEST_CODE);
     }
 
-    private void takePictureIntent() {
+    private File createImageFile() throws IOException {
+        // Create an image file name
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPEG_" + timeStamp + "_";
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File image = File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",         /* suffix */
+                storageDir      /* directory */
+        );
+
+        // Save a file: path for use with ACTION_VIEW intents
+        currentPhotoPath = image.getAbsolutePath();
+        currentPhotoUri = Uri.fromFile(image);
+        return image;
+    }
+
+    private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if(takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+                ex.printStackTrace();
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "com.andreimesina.moments.fileprovider",
+                        photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+            }
         }
     }
 
