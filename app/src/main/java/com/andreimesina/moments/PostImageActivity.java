@@ -21,8 +21,6 @@ import java.io.File;
 public class PostImageActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String TAG = "PostImageActivity";
-    public static final int CODE_SAVE = 2;
-    public static final int CODE_CANCEL = 3;
 
     private String currentPhotoPath;
 
@@ -142,12 +140,10 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
                 intent.putExtra("Location", mEditTextLocation.getText().toString());
             }
 
-            startActivityForResult(intent, CODE_SAVE);
             finish();
         } else if(v.getId() == R.id.btn_cancel_post) {
             deleteCurrentPhoto();
 
-            startActivityForResult(intent, CODE_CANCEL);
             finish();
         }
     }

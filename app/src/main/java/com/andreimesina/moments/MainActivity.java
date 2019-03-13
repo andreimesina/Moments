@@ -30,6 +30,7 @@ import com.andreimesina.moments.fragments.ContactFragment;
 import com.andreimesina.moments.fragments.HomeFragment;
 import com.andreimesina.moments.utils.ActivityUtils;
 import com.andreimesina.moments.utils.GoogleSignInUtils;
+import com.andreimesina.moments.utils.SharedPreferencesUtils;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -161,15 +162,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onRestart() {
+        super.onRestart();
+
+        String newPhotoAction = SharedPreferencesUtils.getString(this, "new_photo_action");
+
+        if(newPhotoAction.equalsIgnoreCase("save")) {
+            // TODO: add photo to list
+
+            SharedPreferencesUtils.deleteValue(this, "new_photo_action");
+        } else {
+            SharedPreferencesUtils.deleteValue(this, "new_photo_action");
+        }
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
             goToPostActivity();
-        } else if(requestCode == PostImageActivity.CODE_CANCEL) {
-            File file = new File(currentPhotoPath);
-            file.delete();
-        } else if(requestCode == PostImageActivity.CODE_SAVE) {
-            // TODO
         }
     }
 
