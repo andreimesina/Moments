@@ -3,6 +3,7 @@ package com.andreimesina.moments.utils;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.media.ExifInterface;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.ActivityCompat;
@@ -11,6 +12,7 @@ import android.util.TypedValue;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 
+import java.io.IOException;
 import java.util.Map;
 
 public class ActivityUtils {
@@ -49,6 +51,14 @@ public class ActivityUtils {
     public static float dpToPx(Context context, float valueInDp) {
         DisplayMetrics metrics = context.getResources().getDisplayMetrics();
         return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, valueInDp, metrics);
+    }
+
+    public static void fixImageExifOrientation(String pathOld, String pathNew) throws IOException {
+        ExifInterface exif = new ExifInterface(pathOld);
+        ExifInterface exif2 = new ExifInterface(pathNew);
+
+        exif2.setAttribute(ExifInterface.TAG_ORIENTATION, exif.getAttribute(ExifInterface.TAG_ORIENTATION));
+        exif2.saveAttributes();
     }
 
 }

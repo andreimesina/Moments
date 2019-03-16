@@ -2,9 +2,8 @@ package com.andreimesina.moments;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.net.Uri;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -16,13 +15,15 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import com.andreimesina.moments.utils.SharedPreferencesUtils;
+
 import java.io.File;
 
 public class PostImageActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String TAG = "PostImageActivity";
 
-    private String currentPhotoPath;
+    private String currentImagePath;
 
     private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mDrawerToggle;
@@ -88,18 +89,15 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
         Intent intent = getIntent();
 
         if(intent != null) {
-            Uri imageUri = Uri.parse(String.valueOf(intent.getExtras().get("image_uri")));
-            currentPhotoPath = intent.getExtras().get("image_path").toString();
-            Bitmap bitmap = null;
-            try {
-                bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            currentImagePath = intent.getExtras().get("image_path").toString();
 
             if(mImageView == null) {
                 mImageView = findViewById(R.id.image_post);
             }
+
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+            Bitmap bitmap = BitmapFactory.decodeFile(currentImagePath, options);
 
             if(bitmap != null) {
                 mImageView.setImageBitmap(bitmap);
@@ -107,8 +105,8 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
         }
     }
 
-    private void deleteCurrentPhoto() {
-        File file = new File(currentPhotoPath);
+    private void deleteCurrentImage() {
+        File file = new File(currentImagePath);
         file.delete();
     }
 
@@ -129,29 +127,27 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
 
     @Override
     public void onClick(View v) {
-        Intent intent = new Intent(PostImageActivity.this, MainActivity.class);
-
         if(v.getId() == R.id.btn_save_post) {
-            if(mEditTextStory.getText().toString() != null) {
-                intent.putExtra("Story", mEditTextStory.getText().toString());
-            }
-
-            if(mEditTextLocation.getText().toString() != null) {
-                intent.putExtra("Location", mEditTextLocation.getText().toString());
-            }
-
-            finish();
+            SharedPreferencesUtils.setString(this, "image_action",
+                    "save");
+            SharedPreferencesUtils.setString(this, "image_story",
+                    mEditTextStory.getText().toString());
+            SharedPreferencesUtils.setString(this, "image_location",
+                    mEditTextLocation.getText().toString());
         } else if(v.getId() == R.id.btn_cancel_post) {
-            deleteCurrentPhoto();
+            SharedPreferencesUtils.setString(this, "image_action",
+                    "cancel");
 
-            finish();
+            deleteCurrentImage();
         }
+
+        finish();
     }
 
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        deleteCurrentPhoto();
+        deleteCurrentImage();
         finish();
     }
 }

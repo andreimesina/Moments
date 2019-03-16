@@ -40,7 +40,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:layout_marginEnd="16dp"
-                    android:hint="Description" />
+                    android:hint="Story"
+                    android:inputType="text" />
             </android.support.design.widget.TextInputLayout>
 
             <android.support.design.widget.TextInputLayout
@@ -58,7 +59,8 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
                     android:layout_marginEnd="16dp"
-                    android:hint="Location" />
+                    android:hint="Location"
+                    android:inputType="textShortMessage" />
             </android.support.design.widget.TextInputLayout>
 
             <android.support.constraint.Guideline

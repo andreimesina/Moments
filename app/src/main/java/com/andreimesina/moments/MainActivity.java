@@ -3,6 +3,8 @@ package com.andreimesina.moments;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -24,6 +26,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.andreimesina.moments.fragments.AboutUsFragment;
 import com.andreimesina.moments.fragments.ContactFragment;
@@ -35,10 +38,21 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageMetadata;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -46,14 +60,15 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
     private static final String HOME_FRAGMENT = "home";
-//    private static final String FAVOURITE_FRAGMENT = "favourite";
+    // private static final String FAVOURITE_FRAGMENT = "favourite";
     private static final String ABOUT_US_FRAGMENT = "about us";
     private static final String CONTACT_FRAGMENT = "contact";
 
     private static final int PERMISSION_REQUEST_CODE = 200;
-    private static final int REQUEST_TAKE_PHOTO = 1;
+    private static final int REQUEST_CAMERA = 1;
 
     private FirebaseAuth mAuth;
+    private FirebaseStorage mStorage;
 
     private GoogleSignInOptions mGoogleSignInOptions;
     private GoogleSignInClient mGoogleSignInClient;
@@ -62,8 +77,10 @@ public class MainActivity extends AppCompatActivity {
     private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mDrawerToggle;
 
-    private String currentPhotoPath;
-    private Uri currentPhotoUri;
+    private String currentImagePath;
+    private String compressedImagePath;
+    private Uri currentImageUri;
+    private Uri compressedImageUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -165,29 +182,46 @@ public class MainActivity extends AppCompatActivity {
     protected void onRestart() {
         super.onRestart();
 
-        String newPhotoAction = SharedPreferencesUtils.getString(this, "new_photo_action");
+        String imageAction = SharedPreferencesUtils.getString(this, "image_action");
+        if(imageAction.equalsIgnoreCase("save")) {
+            // TODO: add image to list
+            try {
+                compressImage();
+                deleteBigImage();
 
-        if(newPhotoAction.equalsIgnoreCase("save")) {
-            // TODO: add photo to list
+                String filename = SharedPreferencesUtils.getString(this, "image_filename");
+                SharedPreferencesUtils.deleteValue(this, "image_filename");
+                SharedPreferencesUtils.setString(this, "image_filename",
+                        filename.replace(".jpeg", "c.jpeg"));
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                uploadImageToStorage();
+            }
 
-            SharedPreferencesUtils.deleteValue(this, "new_photo_action");
-        } else {
-            SharedPreferencesUtils.deleteValue(this, "new_photo_action");
+            SharedPreferencesUtils.deleteValue(this, "image_action");
+            SharedPreferencesUtils.deleteValue(this, "image_story");
+            SharedPreferencesUtils.deleteValue(this, "image_location");
+            SharedPreferencesUtils.deleteValue(this, "image_filename");
+
+        } else if(imageAction.equalsIgnoreCase("cancel")) {
+            SharedPreferencesUtils.deleteValue(this, "image_action");
+            SharedPreferencesUtils.deleteValue(this, "image_filename");
         }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_TAKE_PHOTO && resultCode == RESULT_OK) {
+        if (requestCode == REQUEST_CAMERA && resultCode == RESULT_OK) {
             goToPostActivity();
         }
     }
 
     private void goToPostActivity() {
         Intent intent = new Intent(this, PostImageActivity.class);
-        intent.putExtra("image_uri", currentPhotoUri);
-        intent.putExtra("image_path", currentPhotoPath);
+        intent.putExtra("image_uri", currentImageUri);
+        intent.putExtra("image_path", currentImagePath);
 
         startActivity(intent);
     }
@@ -219,6 +253,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void initFirebase() {
         mAuth = FirebaseAuth.getInstance();
+        mStorage = FirebaseStorage.getInstance();
     }
 
     private void initGoogle() {
@@ -245,8 +280,11 @@ public class MainActivity extends AppCompatActivity {
         );
 
         // Save a file: path for use with ACTION_VIEW intents
-        currentPhotoPath = image.getAbsolutePath();
-        currentPhotoUri = Uri.fromFile(image);
+        currentImagePath = image.getAbsolutePath();
+        currentImageUri = Uri.fromFile(image);
+
+        SharedPreferencesUtils.setString(this, "image_filename", imageFileName);
+
         return image;
     }
 
@@ -254,23 +292,83 @@ public class MainActivity extends AppCompatActivity {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         // Ensure that there's a camera activity to handle the intent
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            // Create the File where the photo should go
-            File photoFile = null;
+            // Create the File where the image should go
+            File imageFile = null;
             try {
-                photoFile = createImageFile();
+                imageFile = createImageFile();
             } catch (IOException ex) {
                 // Error occurred while creating the File
                 ex.printStackTrace();
             }
             // Continue only if the File was successfully created
-            if (photoFile != null) {
-                Uri photoURI = FileProvider.getUriForFile(this,
+            if (imageFile != null) {
+                Uri imageURI = FileProvider.getUriForFile(this,
                         "com.andreimesina.moments.fileprovider",
-                        photoFile);
-                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
+                        imageFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageURI);
+                startActivityForResult(takePictureIntent, REQUEST_CAMERA);
             }
         }
+    }
+
+    private void compressImage() throws IOException {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+        Bitmap bitmap = BitmapFactory.decodeFile(currentImagePath, options);
+        compressedImagePath = currentImagePath.replace(".jpg", "c.jpg");
+        compressedImageUri = Uri.fromFile(new File(compressedImagePath));
+
+        OutputStream outputStream = new FileOutputStream(compressedImagePath);
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream);
+
+        ActivityUtils.fixImageExifOrientation(currentImagePath, compressedImagePath);
+
+        outputStream.flush();
+        outputStream.close();
+    }
+
+    private void uploadImageToStorage() {
+        StorageReference storageRef = mStorage.getReference();
+        StorageReference imgRef = storageRef.child("/users/" + mAuth.getUid() + "/images/"
+                + SharedPreferencesUtils.getString(this, "image_filename"));
+
+        String imgStory = SharedPreferencesUtils.getString(this, "image_story");
+        String imgLocation = SharedPreferencesUtils.getString(this, "image_location");
+
+        StorageMetadata metadata = new StorageMetadata.Builder()
+                .setContentType("image/jpg")
+                .setCustomMetadata("test", "dev")
+                .setCustomMetadata("filename", SharedPreferencesUtils
+                        .getString(this, "image_filename"))
+                .setCustomMetadata("story", imgStory)
+                .setCustomMetadata("location", imgLocation)
+                .build();
+
+        InputStream stream = null;
+        try {
+            stream = new FileInputStream(compressedImagePath);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        UploadTask uploadTask = imgRef.putStream(stream, metadata);
+        uploadTask.addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Toast.makeText(MainActivity.this, "Image upload failed!",
+                        Toast.LENGTH_LONG).show();
+            }
+        }).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
+
+            }
+        });
+    }
+
+    private void deleteBigImage() {
+        File img = new File(currentImagePath);
+        img.delete();
     }
 
     private void putFragment(Fragment fragment, String fragmentTag) {
@@ -304,7 +402,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         // if navigation icon is menu
         if (mDrawerToggle.onOptionsItemSelected(item) &&
-        mDrawerToggle.isDrawerIndicatorEnabled()) {
+                mDrawerToggle.isDrawerIndicatorEnabled()) {
             return true;
 
         // if navigation icon is back arrow
