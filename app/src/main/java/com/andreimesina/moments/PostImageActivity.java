@@ -3,6 +3,7 @@ package com.andreimesina.moments;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.ExifInterface;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -18,6 +19,7 @@ import android.widget.ImageView;
 import com.andreimesina.moments.utils.SharedPreferencesUtils;
 
 import java.io.File;
+import java.io.IOException;
 
 public class PostImageActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -102,6 +104,12 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
             if(bitmap != null) {
                 mImageView.setImageBitmap(bitmap);
             }
+
+            try {
+                fixImageViewOrientation();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -113,6 +121,27 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
     private void setButtonsListener() {
         mBtnSave.setOnClickListener(this);
         mBtnCancel.setOnClickListener(this);
+    }
+
+    private void fixImageViewOrientation() throws IOException {
+        ExifInterface exifInterface = new ExifInterface(currentImagePath);
+
+        int rotation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, -1);
+        switch (rotation) {
+            case ExifInterface.ORIENTATION_ROTATE_90:
+                mImageView.animate().rotation(90).setDuration(0);
+                break;
+
+            case ExifInterface.ORIENTATION_ROTATE_180:
+                mImageView.animate().rotation(180).setDuration(0);
+                break;
+
+            case ExifInterface.ORIENTATION_ROTATE_270:
+                mImageView.animate().rotation(270).setDuration(0);
+                break;
+
+            default:
+        }
     }
 
     @Override
