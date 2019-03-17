@@ -75,6 +75,7 @@ public class MainActivity extends AppCompatActivity {
     private GoogleSignInAccount mGoogleSignInAccount;
     
     private DrawerLayout mDrawerLayout;
+    private NavigationView mNavigationView;
     private ActionBarDrawerToggle mDrawerToggle;
 
     private String currentImagePath;
@@ -87,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Init db connections
         initFirebase();
         initGoogle();
 
@@ -113,61 +115,10 @@ public class MainActivity extends AppCompatActivity {
         mDrawerLayout.addDrawerListener(mDrawerToggle);
 
         // Navigation item selection listener
-        NavigationView navigationView = findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(
-                new NavigationView.OnNavigationItemSelectedListener() {
-                    @Override
-                    public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
-                        menuItem.setChecked(true);
-                        mDrawerLayout.closeDrawers();
+        initNavigationView();
 
-                        Integer itemId = menuItem.getItemId();
-
-                        switch(itemId) {
-                            case R.id.nav_home:
-                                Log.d(TAG, "onNavigationItemSelected: home");
-                                HomeFragment homeFragment = new HomeFragment();
-                                putFragment(homeFragment, HOME_FRAGMENT);
-                                break;
-
-                            case R.id.nav_favourite:
-                                // TODO
-                                break;
-
-                            case R.id.nav_about_us:
-                                Log.d(TAG, "onNavigationItemSelected: about us");
-                                AboutUsFragment aboutUsFragment = new AboutUsFragment();
-                                putFragment(aboutUsFragment, ABOUT_US_FRAGMENT);
-                                break;
-
-                            case R.id.nav_contact:
-                                Log.d(TAG, "onNavigationItemSelected: contact");
-                                ContactFragment contactFragment = new ContactFragment();
-                                putFragment(contactFragment, CONTACT_FRAGMENT);
-                                break;
-
-                            default:
-                                Log.d(TAG, "onNavigationItemSelected: bad id: " + menuItem.getItemId());
-                                return false;
-                        }
-
-                        return true;
-                    }
-                }
-        );
-
-        FloatingActionButton fab = findViewById(R.id.fab_add_image);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(checkPermission()) {
-                    dispatchTakePictureIntent();
-                } else {
-                    requestPermission();
-                }
-            }
-        });
-
+        // "+" button to add images
+        initFloatingActionButton();
     }
 
     @Override
@@ -260,6 +211,67 @@ public class MainActivity extends AppCompatActivity {
         mGoogleSignInOptions = GoogleSignInUtils.getSignInOptionsProfileEmail(getString(R.string.web_client_id));
         mGoogleSignInClient = GoogleSignIn.getClient(this, mGoogleSignInOptions);
         mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
+    }
+
+    private void initNavigationView() {
+        mNavigationView = findViewById(R.id.nav_view);
+        mNavigationView.setCheckedItem(R.id.item_nav_home);
+
+        mNavigationView.setNavigationItemSelectedListener(
+                new NavigationView.OnNavigationItemSelectedListener() {
+                    @Override
+                    public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+                        menuItem.setChecked(true);
+                        mDrawerLayout.closeDrawers();
+
+                        Integer itemId = menuItem.getItemId();
+
+                        switch(itemId) {
+                            case R.id.item_nav_home:
+                                Log.d(TAG, "onNavigationItemSelected: home");
+                                HomeFragment homeFragment = new HomeFragment();
+                                putFragment(homeFragment, HOME_FRAGMENT);
+                                break;
+
+                            case R.id.item_nav_favourite:
+                                // TODO
+                                break;
+
+                            case R.id.item_nav_about_us:
+                                Log.d(TAG, "onNavigationItemSelected: about us");
+                                AboutUsFragment aboutUsFragment = new AboutUsFragment();
+                                putFragment(aboutUsFragment, ABOUT_US_FRAGMENT);
+                                break;
+
+                            case R.id.item_nav_contact:
+                                Log.d(TAG, "onNavigationItemSelected: contact");
+                                ContactFragment contactFragment = new ContactFragment();
+                                putFragment(contactFragment, CONTACT_FRAGMENT);
+                                break;
+
+                            default:
+                                Log.d(TAG, "onNavigationItemSelected: bad id: " + menuItem.getItemId());
+                                return false;
+                        }
+
+                        return true;
+                    }
+                }
+        );
+    }
+
+    private void initFloatingActionButton() {
+        FloatingActionButton fab = findViewById(R.id.fab_add_image);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(checkPermission()) {
+                    dispatchTakePictureIntent();
+                } else {
+                    requestPermission();
+                }
+            }
+        });
     }
 
     private void requestPermission() {
@@ -384,8 +396,10 @@ public class MainActivity extends AppCompatActivity {
         if (getSupportActionBar() != null) {
             if(fragmentTag.equalsIgnoreCase(HOME_FRAGMENT)) {
                 mDrawerToggle.setDrawerIndicatorEnabled(true);
+                mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
             } else {
                 mDrawerToggle.setDrawerIndicatorEnabled(false);
+                mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
             }
         }
     }
