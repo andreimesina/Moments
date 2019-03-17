@@ -45,7 +45,6 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
         initToolbar();
         getImageFromCamera();
         setButtonsListener();
-
     }
 
     @Override
@@ -54,6 +53,13 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
 
         // sync navigation icon state
         mDrawerToggle.syncState();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        deleteCurrentImage();
+        finish();
     }
 
     private void setViews() {
@@ -67,7 +73,7 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
     private void initToolbar() {
         // Create toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
-        if(toolbar != null) {
+        if (toolbar != null) {
             setSupportActionBar(toolbar);
         }
 
@@ -90,10 +96,10 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
     private void getImageFromCamera() {
         Intent intent = getIntent();
 
-        if(intent != null) {
+        if (intent != null) {
             currentImagePath = intent.getExtras().get("image_path").toString();
 
-            if(mImageView == null) {
+            if (mImageView == null) {
                 mImageView = findViewById(R.id.image_post);
             }
 
@@ -101,7 +107,7 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
             options.inPreferredConfig = Bitmap.Config.ARGB_8888;
             Bitmap bitmap = BitmapFactory.decodeFile(currentImagePath, options);
 
-            if(bitmap != null) {
+            if (bitmap != null) {
                 mImageView.setImageBitmap(bitmap);
             }
 
@@ -146,7 +152,7 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if(mDrawerToggle.isDrawerIndicatorEnabled() == false) {
+        if (mDrawerToggle.isDrawerIndicatorEnabled() == false) {
             onBackPressed();
             return false;
         }
@@ -156,27 +162,20 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
 
     @Override
     public void onClick(View v) {
-        if(v.getId() == R.id.btn_save_post) {
+        if (v.getId() == R.id.btn_save_post) {
             SharedPreferencesUtils.setString(this, "image_action",
                     "save");
             SharedPreferencesUtils.setString(this, "image_story",
                     mEditTextStory.getText().toString());
             SharedPreferencesUtils.setString(this, "image_location",
                     mEditTextLocation.getText().toString());
-        } else if(v.getId() == R.id.btn_cancel_post) {
+        } else if (v.getId() == R.id.btn_cancel_post) {
             SharedPreferencesUtils.setString(this, "image_action",
                     "cancel");
 
             deleteCurrentImage();
         }
 
-        finish();
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        deleteCurrentImage();
         finish();
     }
 }
