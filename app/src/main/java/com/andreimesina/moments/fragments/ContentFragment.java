@@ -136,16 +136,6 @@ public class ContentFragment extends Fragment {
         activity.findViewById(R.id.fab_add_image).setVisibility(View.VISIBLE);
     }
 
-    private boolean momentsContainUrl(String url) {
-        for(Moment m : mMoments) {
-            if(m.getImageUrl().equalsIgnoreCase(url)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     private void removeMoment(Moment moment) {
         for(int i = 0; i < mMoments.size(); i++) {
             if(mMoments.get(i).getImageUrl().equalsIgnoreCase(moment.getImageUrl())) {

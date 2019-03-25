@@ -21,7 +21,7 @@
         android:layout_margin="16dp"
         android:layout_gravity="center_horizontal"/>
 
-    <FrameLayout
+    <android.support.constraint.ConstraintLayout
         android:id="@+id/placeholder"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -32,9 +32,26 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
-            android:layout_margin="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="8dp"
             android:clickable="true"
+            app:layout_constraintBottom_toTopOf="@+id/ads_banner"
+            app:layout_constraintEnd_toEndOf="parent"
             app:srcCompat="@drawable/ic_fab" />
-    </FrameLayout>
+
+        <com.google.android.gms.ads.AdView xmlns:ads="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/ads_banner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:elevation="2dp"
+            ads:adSize="BANNER"
+            ads:adUnitId="ca-app-pub-3940256099942544/6300978111"
+            ads:layout_constraintBottom_toBottomOf="parent"
+            ads:layout_constraintEnd_toEndOf="parent"
+            ads:layout_constraintStart_toStartOf="parent"></com.google.android.gms.ads.AdView>
+    </android.support.constraint.ConstraintLayout>
+
+
 
 </LinearLayout>

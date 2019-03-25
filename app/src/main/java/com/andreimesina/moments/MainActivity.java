@@ -39,6 +39,9 @@ import com.andreimesina.moments.utils.ActivityUtils;
 import com.andreimesina.moments.utils.GoogleSignInUtils;
 import com.andreimesina.moments.utils.SharedPreferencesUtils;
 import com.bumptech.glide.Glide;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -91,6 +94,8 @@ public class MainActivity extends AppCompatActivity {
     private NavigationView mNavigationView;
     private ActionBarDrawerToggle mDrawerToggle;
 
+    private AdView mAdBanner;
+
     private String currentImagePath;
     private String compressedImagePath;
     private Uri currentImageUri;
@@ -104,6 +109,9 @@ public class MainActivity extends AppCompatActivity {
         // Init db connections
         initFirebase();
         initGoogle();
+
+        // Init AdMob
+        initAdMob();
 
         // Starting screen with "moments"
         ContentFragment contentFragment = new ContentFragment();
@@ -235,6 +243,14 @@ public class MainActivity extends AppCompatActivity {
         mGoogleSignInOptions = GoogleSignInUtils.getSignInOptionsProfileEmail(getString(R.string.web_client_id));
         mGoogleSignInClient = GoogleSignIn.getClient(this, mGoogleSignInOptions);
         mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
+    }
+
+    private void initAdMob() {
+        MobileAds.initialize(this, "ca-app-pub-4791318943765971~3082630931");
+
+        mAdBanner = findViewById(R.id.ads_banner);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdBanner.loadAd(adRequest);
     }
 
     private void initNavigationView() {
