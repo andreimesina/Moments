@@ -27,7 +27,9 @@ import android.util.Log;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.PopupMenu;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.andreimesina.moments.fragments.AboutUsFragment;
@@ -36,6 +38,7 @@ import com.andreimesina.moments.fragments.ContentFragment;
 import com.andreimesina.moments.utils.ActivityUtils;
 import com.andreimesina.moments.utils.GoogleSignInUtils;
 import com.andreimesina.moments.utils.SharedPreferencesUtils;
+import com.bumptech.glide.Glide;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -126,6 +129,9 @@ public class MainActivity extends AppCompatActivity {
 
         // Navigation item selection listener
         initNavigationView();
+
+        // Navigation header user data
+        initNavigationHeader();
 
         // "+" button to add images
         initFloatingActionButton();
@@ -276,6 +282,21 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
         );
+    }
+
+    private void initNavigationHeader() {
+        View header = mNavigationView.getHeaderView(0);
+
+        ImageView userPic = header.findViewById(R.id.nav_profile_img);
+        TextView userName = header.findViewById(R.id.nav_profile_name);
+        TextView userEmail = header.findViewById(R.id.nav_profile_email);
+
+        Glide.with(this)
+                .load(mUser.getPhotoUrl())
+                .into(userPic);
+
+        userName.setText(mUser.getDisplayName());
+        userEmail.setText(mUser.getEmail());
     }
 
     private void initFloatingActionButton() {

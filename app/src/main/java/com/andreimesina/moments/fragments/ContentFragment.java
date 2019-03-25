@@ -12,7 +12,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import com.andreimesina.moments.MomentAdapter;
 import com.andreimesina.moments.R;
@@ -96,11 +95,9 @@ public class ContentFragment extends Fragment {
                 @Override
                 public void onEvent(@Nullable QuerySnapshot values,
                                     @Nullable FirebaseFirestoreException e) {
-
                     mProgressBar.setVisibility(View.VISIBLE);
+
                     if (e != null) {
-                        Toast.makeText(activity, e.getMessage(),
-                                Toast.LENGTH_SHORT).show();
                         mProgressBar.setVisibility(View.GONE);
                         return;
                     }
