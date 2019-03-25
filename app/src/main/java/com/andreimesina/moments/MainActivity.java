@@ -24,13 +24,15 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.PopupMenu;
 import android.widget.Toast;
 
 import com.andreimesina.moments.fragments.AboutUsFragment;
 import com.andreimesina.moments.fragments.ContactFragment;
-import com.andreimesina.moments.fragments.HomeFragment;
+import com.andreimesina.moments.fragments.ContentFragment;
 import com.andreimesina.moments.utils.ActivityUtils;
 import com.andreimesina.moments.utils.GoogleSignInUtils;
 import com.andreimesina.moments.utils.SharedPreferencesUtils;
@@ -38,10 +40,12 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreSettings;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
@@ -55,11 +59,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
-    private static final String HOME_FRAGMENT = "home";
+    private static final String HOME_FRAGMENT = "content";
     // private static final String FAVOURITE_FRAGMENT = "favourite";
     private static final String ABOUT_US_FRAGMENT = "about us";
     private static final String CONTACT_FRAGMENT = "contact";
@@ -68,7 +74,11 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CAMERA = 1;
 
     private FirebaseAuth mAuth;
+    private FirebaseUser mUser;
     private FirebaseStorage mStorage;
+    private FirebaseFirestore mFirestore;
+
+    private UploadTask mUploadTask;
 
     private GoogleSignInOptions mGoogleSignInOptions;
     private GoogleSignInClient mGoogleSignInClient;
@@ -93,8 +103,8 @@ public class MainActivity extends AppCompatActivity {
         initGoogle();
 
         // Starting screen with "moments"
-        HomeFragment homeFragment = new HomeFragment();
-        putFragment(homeFragment, HOME_FRAGMENT);
+        ContentFragment contentFragment = new ContentFragment();
+        putFragment(contentFragment, HOME_FRAGMENT);
 
         // Create toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -134,21 +144,22 @@ public class MainActivity extends AppCompatActivity {
         super.onRestart();
 
         String imageAction = SharedPreferencesUtils.getString(this, "image_action");
-        if(imageAction.equalsIgnoreCase("save")) {
+        if(imageAction.equalsIgnoreCase("save") && (mUploadTask == null
+                || (mUploadTask != null && mUploadTask.isInProgress() == false))) {
             // TODO: add image to list
             try {
                 compressImage();
                 deleteBigImage();
-
-                String filename = SharedPreferencesUtils.getString(this, "image_filename");
-                SharedPreferencesUtils.deleteValue(this, "image_filename");
-                SharedPreferencesUtils.setString(this, "image_filename",
-                        filename.replace(".jpeg", "c.jpeg"));
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
                 uploadImageToStorage();
             }
+
+            String filename = SharedPreferencesUtils.getString(this, "image_filename");
+            SharedPreferencesUtils.deleteValue(this, "image_filename");
+            SharedPreferencesUtils.setString(this, "image_filename",
+                    filename.replace(".jpeg", "c.jpeg"));
 
             SharedPreferencesUtils.deleteValue(this, "image_action");
             SharedPreferencesUtils.deleteValue(this, "image_story");
@@ -204,7 +215,14 @@ public class MainActivity extends AppCompatActivity {
 
     private void initFirebase() {
         mAuth = FirebaseAuth.getInstance();
+        mUser = mAuth.getCurrentUser();
         mStorage = FirebaseStorage.getInstance();
+        mFirestore = FirebaseFirestore.getInstance();
+
+        FirebaseFirestoreSettings settings = new FirebaseFirestoreSettings.Builder()
+                .setPersistenceEnabled(true)
+                .build();
+        mFirestore.setFirestoreSettings(settings);
     }
 
     private void initGoogle() {
@@ -228,9 +246,9 @@ public class MainActivity extends AppCompatActivity {
 
                         switch(itemId) {
                             case R.id.item_nav_home:
-                                Log.d(TAG, "onNavigationItemSelected: home");
-                                HomeFragment homeFragment = new HomeFragment();
-                                putFragment(homeFragment, HOME_FRAGMENT);
+                                Log.d(TAG, "onNavigationItemSelected: content");
+                                ContentFragment contentFragment = new ContentFragment();
+                                putFragment(contentFragment, HOME_FRAGMENT);
                                 break;
 
                             case R.id.item_nav_favourite:
@@ -341,16 +359,18 @@ public class MainActivity extends AppCompatActivity {
 
     private void uploadImageToStorage() {
         StorageReference storageRef = mStorage.getReference();
-        StorageReference imgRef = storageRef.child("/users/" + mAuth.getUid() + "/images/"
-                + SharedPreferencesUtils.getString(this, "image_filename"));
 
-        String imgStory = SharedPreferencesUtils.getString(this, "image_story");
-        String imgLocation = SharedPreferencesUtils.getString(this, "image_location");
+        final String timestamp = String.valueOf(System.currentTimeMillis());
+        final StorageReference imgRef = storageRef.child("/users/" + mUser.getDisplayName() + "/"
+                + mAuth.getUid() + "/images/" + String.valueOf(timestamp) + ".jpg");
+
+        final String imgStory = SharedPreferencesUtils.getString(this, "image_story");
+        final String imgLocation = SharedPreferencesUtils.getString(this, "image_location");
 
         StorageMetadata metadata = new StorageMetadata.Builder()
                 .setContentType("image/jpg")
                 .setCustomMetadata("test", "dev")
-                .setCustomMetadata("filename", SharedPreferencesUtils
+                .setCustomMetadata("local_filename", SharedPreferencesUtils
                         .getString(this, "image_filename"))
                 .setCustomMetadata("story", imgStory)
                 .setCustomMetadata("location", imgLocation)
@@ -363,19 +383,56 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
-        UploadTask uploadTask = imgRef.putStream(stream, metadata);
-        uploadTask.addOnFailureListener(new OnFailureListener() {
+        mUploadTask = imgRef.putStream(stream, metadata);
+        mUploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                imgRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                    @Override
+                    public void onSuccess(Uri uri) {
+                        saveImageToFirestore(uri.toString(), imgStory,
+                                imgLocation, timestamp);
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Toast.makeText(MainActivity.this, "Image upload failed!",
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
+
+            }
+        }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
                 Toast.makeText(MainActivity.this, "Image upload failed!",
                         Toast.LENGTH_LONG).show();
             }
-        }).addOnCompleteListener(new OnCompleteListener<UploadTask.TaskSnapshot>() {
-            @Override
-            public void onComplete(@NonNull Task<UploadTask.TaskSnapshot> task) {
-
-            }
         });
+    }
+
+    private void saveImageToFirestore(String url, String story, String location, String timestamp) {
+        Map<String, String> moment = new HashMap<>();
+        moment.put("filename", timestamp + ".jpg");
+        moment.put("imageUrl", url);
+        moment.put("story", story);
+        moment.put("location", location);
+
+        mFirestore
+                .collection("users").document(mUser.getUid())
+                .collection("images").document(timestamp + ".jpg")
+                .set(moment)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+
+                    }
+                });
     }
 
     private void deleteBigImage() {
@@ -392,7 +449,7 @@ public class MainActivity extends AppCompatActivity {
         fragmentTransaction.addToBackStack(null);
         fragmentTransaction.commit();
 
-        // Show back arrow for navigation if not in home screen
+        // Show back arrow for navigation if not in content screen
         if (getSupportActionBar() != null) {
             if(fragmentTag.equalsIgnoreCase(HOME_FRAGMENT)) {
                 mDrawerToggle.setDrawerIndicatorEnabled(true);
@@ -410,6 +467,27 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return false;
+    }
+
+    public void showOptionsMenu(View view) {
+
+        PopupMenu popupMenu = new PopupMenu(this, view);
+        MenuInflater menuInflater = popupMenu.getMenuInflater();
+        menuInflater.inflate(R.menu.card_menu, popupMenu.getMenu());
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                if(item.getItemId() == R.id.item_card_edit) {
+                    Toast.makeText(MainActivity.this, "Edit", Toast.LENGTH_SHORT).show();
+                    return true;
+                } else if(item.getItemId() == R.id.item_card_delete) {
+                    Toast.makeText(MainActivity.this, "Delete", Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+                return false;
+            }
+        });
+        popupMenu.show();
     }
 
     @Override
@@ -437,11 +515,11 @@ public class MainActivity extends AppCompatActivity {
         if(drawer != null && mDrawerLayout.isDrawerOpen(drawer)) {
             mDrawerLayout.closeDrawers();
 
-        // if navigation menu is closed and app is not in home screen
+        // if navigation menu is closed and app is not in content screen
         } else if(home != null && home.isVisible() == false) {
             putFragment(home, home.getTag());
 
-        // if navigation menu is closed and app is in home screen
+        // if navigation menu is closed and app is in content screen
         } else {
             moveTaskToBack(true);
         }

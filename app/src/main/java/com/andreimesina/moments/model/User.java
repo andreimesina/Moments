@@ -1,22 +1,80 @@
 package com.andreimesina.moments.model;
 
 public class User {
-    private static Integer userId;
-    private static String email;
 
-    public static Integer getUserId() {
+    private String userId;
+    private String photoUrl;
+    private String email;
+    private String name;
+    private String phone;
+    
+    private static volatile User instance;
+    
+    private User() {
+        
+    }
+    
+    public static synchronized User getInstance() {
+        User user = instance;
+
+        if(user == null) {
+            synchronized (User.class) {
+                user = instance;
+
+                if(user == null) {
+                    instance = user = new User();
+                }
+            }
+        }
+
+        return user;
+    }
+
+    public void clearData() {
+        userId = "";
+        photoUrl = "";
+        email = "";
+        name = "";
+        phone = "";
+    }
+
+    public String getUserId() {
         return userId;
     }
 
-    public static void setUserId(Integer newUserId) {
-        userId = newUserId;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
-    public static String getEmail() {
+    public String getPhotoUrl() {
+        return photoUrl;
+    }
+
+    public void setPhotoUrl(String photoUrl) {
+        this.photoUrl = photoUrl;
+    }
+
+    public String getEmail() {
         return email;
     }
 
-    public static void setEmail(String newEmail) {
-        email = newEmail;
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 }

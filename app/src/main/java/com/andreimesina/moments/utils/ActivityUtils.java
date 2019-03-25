@@ -1,9 +1,11 @@
 package com.andreimesina.moments.utils;
 
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.media.ExifInterface;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.ActivityCompat;
@@ -11,6 +13,7 @@ import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
+import android.webkit.MimeTypeMap;
 
 import java.io.IOException;
 import java.util.Map;
@@ -61,4 +64,10 @@ public class ActivityUtils {
         exif2.saveAttributes();
     }
 
+    public static String getFileExtension(Context context, Uri uri) {
+        ContentResolver cr = context.getContentResolver();
+        MimeTypeMap mime = MimeTypeMap.getSingleton();
+
+        return mime.getExtensionFromMimeType(cr.getType(uri));
+    }
 }

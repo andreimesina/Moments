@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:id="@+id/drawer_layout" >
 
-    <include layout="@layout/content" />
+    <include layout="@layout/home" />
 
     <include layout="@layout/nav_view" />
 

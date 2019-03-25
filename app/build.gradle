@@ -2,9 +2,9 @@ apply plugin: 'com.android.application'
 
 // app version
 ext.majorVersion = 0
-ext.minorVersion = 12
-ext.patchVersion = 4
-ext.preRelease = "alpha.1"
+ext.minorVersion = 16
+ext.patchVersion = 0
+ext.preRelease = "alpha.2"
 
 // sdk and tools
 ext.minSdkVersion = 21
@@ -58,12 +58,17 @@ dependencies {
     implementation 'de.hdodenhof:circleimageview:3.0.0'
 
     // Firebase
-    implementation "com.google.firebase:firebase-core:16.0.7"
+    implementation "com.google.firebase:firebase-core:16.0.8"
     implementation "com.google.firebase:firebase-auth:16.2.0"
     implementation "com.google.firebase:firebase-storage:16.1.0"
+    implementation 'com.google.firebase:firebase-firestore:18.1.0'
 
     // Google Play services
     implementation 'com.google.android.gms:play-services-auth:16.0.1'
+
+    // Glide
+    implementation 'com.github.bumptech.glide:glide:4.9.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.9.0'
 
     testImplementation "junit:junit:$project.jUnitVersion"
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
