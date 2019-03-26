@@ -24,11 +24,9 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -52,6 +50,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreSettings;
+import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
@@ -109,6 +108,7 @@ public class MainActivity extends AppCompatActivity {
         // Init db connections
         initFirebase();
         initGoogle();
+        initUser();
 
         // Init AdMob
         initAdMob();
@@ -245,6 +245,17 @@ public class MainActivity extends AppCompatActivity {
         mGoogleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
     }
 
+    private void initUser() {
+        Map<String, String> user = new HashMap<>();
+        user.put("photoUrl", mUser.getPhotoUrl().toString());
+        user.put("name", mUser.getDisplayName());
+        user.put("email", mUser.getEmail());
+        user.put("phone", mUser.getPhoneNumber());
+
+        mFirestore.collection("users").document(mAuth.getUid())
+                .set(user, SetOptions.merge());
+    }
+
     private void initAdMob() {
         MobileAds.initialize(this, "ca-app-pub-4791318943765971~3082630931");
 
@@ -274,6 +285,9 @@ public class MainActivity extends AppCompatActivity {
                                 break;
 
                             case R.id.item_nav_favourite:
+                                menuItem.setChecked(false);
+                                Toast.makeText(MainActivity.this, "Feature coming soon",
+                                        Toast.LENGTH_SHORT).show();
                                 // TODO
                                 break;
 
@@ -398,8 +412,8 @@ public class MainActivity extends AppCompatActivity {
         StorageReference storageRef = mStorage.getReference();
 
         final String timestamp = String.valueOf(System.currentTimeMillis());
-        final StorageReference imgRef = storageRef.child("/users/" + mUser.getDisplayName() + "/"
-                + mAuth.getUid() + "/images/" + String.valueOf(timestamp) + ".jpg");
+        final StorageReference imgRef = storageRef.child("/users/" + mAuth.getUid() + "/" +
+                mUser.getDisplayName() + "/images/" + String.valueOf(timestamp) + ".jpg");
 
         final String imgStory = SharedPreferencesUtils.getString(this, "image_story");
         final String imgLocation = SharedPreferencesUtils.getString(this, "image_location");
@@ -491,6 +505,7 @@ public class MainActivity extends AppCompatActivity {
             if(fragmentTag.equalsIgnoreCase(HOME_FRAGMENT)) {
                 mDrawerToggle.setDrawerIndicatorEnabled(true);
                 mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+                mNavigationView.setCheckedItem(R.id.item_nav_home);
             } else {
                 mDrawerToggle.setDrawerIndicatorEnabled(false);
                 mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
@@ -504,27 +519,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return false;
-    }
-
-    public void showOptionsMenu(View view) {
-
-        PopupMenu popupMenu = new PopupMenu(this, view);
-        MenuInflater menuInflater = popupMenu.getMenuInflater();
-        menuInflater.inflate(R.menu.card_menu, popupMenu.getMenu());
-        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                if(item.getItemId() == R.id.item_card_edit) {
-                    Toast.makeText(MainActivity.this, "Edit", Toast.LENGTH_SHORT).show();
-                    return true;
-                } else if(item.getItemId() == R.id.item_card_delete) {
-                    Toast.makeText(MainActivity.this, "Delete", Toast.LENGTH_SHORT).show();
-                    return true;
-                }
-                return false;
-            }
-        });
-        popupMenu.show();
     }
 
     @Override

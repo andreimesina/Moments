@@ -6,6 +6,7 @@
             android:icon="@drawable/ic_home"
             android:title="@string/nav_home" />
         <item
+            android:checkable="false"
             android:id="@+id/item_nav_favourite"
             android:icon="@drawable/ic_favourite"
             android:title="@string/nav_favourite" />

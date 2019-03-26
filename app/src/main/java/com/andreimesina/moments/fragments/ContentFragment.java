@@ -43,8 +43,6 @@ public class ContentFragment extends Fragment {
 
     private List<Moment> mMoments;
 
-    private static boolean isFirstFetch = true;
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -66,7 +64,7 @@ public class ContentFragment extends Fragment {
         thisActivity.setTitle(R.string.home_title);
 
         initRecyclerView(thisActivity);
-        listenForMoments(thisActivity);
+        listenForMoments();
         setFloatingActionButton(thisActivity);
     }
 
@@ -80,6 +78,9 @@ public class ContentFragment extends Fragment {
         mRecyclerView = activity.findViewById(R.id.content_view);
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(activity));
+
+        mAdapter = new MomentAdapter(activity, mMoments);
+        mRecyclerView.setAdapter(mAdapter);
     }
 
     private void initFirebase() {
@@ -87,7 +88,7 @@ public class ContentFragment extends Fragment {
         mFirestore = FirebaseFirestore.getInstance();
     }
 
-    private void listenForMoments(final Activity activity) {
+    private void listenForMoments() {
         CollectionReference collectionReference = mFirestore.collection("users")
                 .document(mAuth.getUid()).collection("images");
 
@@ -116,8 +117,7 @@ public class ContentFragment extends Fragment {
                         }
                     }
 
-                    mAdapter = new MomentAdapter(activity, mMoments);
-                    mRecyclerView.setAdapter(mAdapter);
+                    mAdapter.notifyDataSetChanged();
 
                     Handler handler = new Handler();
                     handler.postDelayed(new Runnable() {
@@ -126,8 +126,6 @@ public class ContentFragment extends Fragment {
                             mProgressBar.setVisibility(View.GONE);
                         }
                     }, 500);
-
-                    isFirstFetch = false;
                 }
         });
     }
