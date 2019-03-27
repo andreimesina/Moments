@@ -1,10 +1,9 @@
 package com.andreimesina.moments;
 
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.ExifInterface;
 import android.os.Bundle;
+import android.support.design.widget.AppBarLayout;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -16,10 +15,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import com.andreimesina.moments.utils.ActivityUtils;
 import com.andreimesina.moments.utils.SharedPreferencesUtils;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
+import com.dmallcott.dismissibleimageview.DismissibleImageView;
 
 import java.io.File;
-import java.io.IOException;
 
 public class PostImageActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -30,9 +32,10 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
     private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mDrawerToggle;
 
+    private AppBarLayout mAppBar;
     private EditText mEditTextStory;
     private EditText mEditTextLocation;
-    private ImageView mImageView;
+    private DismissibleImageView mImageView;
     private Button mBtnSave;
     private Button mBtnCancel;
 
@@ -58,11 +61,15 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
     @Override
     protected void onStop() {
         super.onStop();
-        deleteCurrentImage();
+
+        if(SharedPreferencesUtils.getString(this, "image_action").equalsIgnoreCase("save")) {
+            deleteCurrentImage();
+        }
         finish();
     }
 
     private void setViews() {
+        mAppBar = findViewById(R.id.layout_appbar);
         mEditTextStory = findViewById(R.id.et_image_story);
         mEditTextLocation = findViewById(R.id.et_image_location);
         mImageView = findViewById(R.id.image_post);
@@ -93,61 +100,46 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
         mDrawerLayout.addDrawerListener(mDrawerToggle);
     }
 
+    private void setButtonsListener() {
+        mBtnSave.setOnClickListener(this);
+        mBtnCancel.setOnClickListener(this);
+    }
+
     private void getImageFromCamera() {
         Intent intent = getIntent();
 
         if (intent != null) {
             currentImagePath = intent.getExtras().get("image_path").toString();
+            setImageScale();
 
-            if (mImageView == null) {
-                mImageView = findViewById(R.id.image_post);
+            if (currentImagePath != null) {
+                Glide.with(this)
+                        .load(currentImagePath)
+                        .transition(DrawableTransitionOptions.withCrossFade())
+                        .into(mImageView);
             }
 
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-            Bitmap bitmap = BitmapFactory.decodeFile(currentImagePath, options);
+        }
+    }
 
-            if (bitmap != null) {
-                mImageView.setImageBitmap(bitmap);
-            }
+    private void setImageScale() {
+        int orientation;
 
-            try {
-                fixImageViewOrientation();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        try {
+            orientation = ActivityUtils.getImageOrientation(currentImagePath);
+        } catch (Exception e) {
+            return ;
+        }
+
+        if(orientation == ExifInterface.ORIENTATION_ROTATE_90 ||
+                orientation == ExifInterface.ORIENTATION_ROTATE_270) {
+            mImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
         }
     }
 
     private void deleteCurrentImage() {
         File file = new File(currentImagePath);
         file.delete();
-    }
-
-    private void setButtonsListener() {
-        mBtnSave.setOnClickListener(this);
-        mBtnCancel.setOnClickListener(this);
-    }
-
-    private void fixImageViewOrientation() throws IOException {
-        ExifInterface exifInterface = new ExifInterface(currentImagePath);
-
-        int rotation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, -1);
-        switch (rotation) {
-            case ExifInterface.ORIENTATION_ROTATE_90:
-                mImageView.animate().rotation(90).setDuration(0);
-                break;
-
-            case ExifInterface.ORIENTATION_ROTATE_180:
-                mImageView.animate().rotation(180).setDuration(0);
-                break;
-
-            case ExifInterface.ORIENTATION_ROTATE_270:
-                mImageView.animate().rotation(270).setDuration(0);
-                break;
-
-            default:
-        }
     }
 
     @Override
@@ -169,13 +161,13 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
                     mEditTextStory.getText().toString());
             SharedPreferencesUtils.setString(this, "image_location",
                     mEditTextLocation.getText().toString());
+            finish();
         } else if (v.getId() == R.id.btn_cancel_post) {
             SharedPreferencesUtils.setString(this, "image_action",
                     "cancel");
 
             deleteCurrentImage();
+            finish();
         }
-
-        finish();
     }
 }

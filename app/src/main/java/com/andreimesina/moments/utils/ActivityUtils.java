@@ -64,6 +64,14 @@ public class ActivityUtils {
         exif2.saveAttributes();
     }
 
+    public static int getImageOrientation(String path) throws IOException {
+        ExifInterface exif = new ExifInterface(path);
+        int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                ExifInterface.ORIENTATION_UNDEFINED);
+
+        return orientation;
+    }
+
     public static String getFileExtension(Context context, Uri uri) {
         ContentResolver cr = context.getContentResolver();
         MimeTypeMap mime = MimeTypeMap.getSingleton();
