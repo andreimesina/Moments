@@ -26,6 +26,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -92,6 +93,7 @@ public class MainActivity extends AppCompatActivity {
     private DrawerLayout mDrawerLayout;
     private NavigationView mNavigationView;
     private ActionBarDrawerToggle mDrawerToggle;
+    private Button mBtnSignOut;
 
     private AdView mAdBanner;
 
@@ -134,6 +136,8 @@ public class MainActivity extends AppCompatActivity {
         mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout,
                 R.string.nav_open, R.string.nav_close);
         mDrawerLayout.addDrawerListener(mDrawerToggle);
+
+        mBtnSignOut = findViewById(R.id.btn_sign_out);
 
         // Navigation item selection listener
         initNavigationView();
@@ -202,9 +206,8 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    public void btnSignOutOnClick(View view) {
+    public void signOut() {
         if(isSignedIn()) {
-
             if(mAuth.getCurrentUser() != null) {
                 mAuth.signOut();
             }
@@ -312,6 +315,13 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
         );
+
+        mBtnSignOut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                signOut();
+            }
+        });
     }
 
     private void initNavigationHeader() {

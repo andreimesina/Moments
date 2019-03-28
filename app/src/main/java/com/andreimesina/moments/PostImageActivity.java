@@ -3,7 +3,6 @@ package com.andreimesina.moments;
 import android.content.Intent;
 import android.media.ExifInterface;
 import android.os.Bundle;
-import android.support.design.widget.AppBarLayout;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -13,7 +12,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 
 import com.andreimesina.moments.utils.ActivityUtils;
 import com.andreimesina.moments.utils.SharedPreferencesUtils;
@@ -32,7 +30,6 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
     private DrawerLayout mDrawerLayout;
     private ActionBarDrawerToggle mDrawerToggle;
 
-    private AppBarLayout mAppBar;
     private EditText mEditTextStory;
     private EditText mEditTextLocation;
     private DismissibleImageView mImageView;
@@ -69,7 +66,6 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
     }
 
     private void setViews() {
-        mAppBar = findViewById(R.id.layout_appbar);
         mEditTextStory = findViewById(R.id.et_image_story);
         mEditTextLocation = findViewById(R.id.et_image_location);
         mImageView = findViewById(R.id.image_post);
@@ -116,6 +112,7 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
                 Glide.with(this)
                         .load(currentImagePath)
                         .transition(DrawableTransitionOptions.withCrossFade())
+                        .centerCrop()
                         .into(mImageView);
             }
 
@@ -133,7 +130,7 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
 
         if(orientation == ExifInterface.ORIENTATION_ROTATE_90 ||
                 orientation == ExifInterface.ORIENTATION_ROTATE_270) {
-            mImageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+//            mImageView.setScaleType(ImageView.ScaleType.CENTER);
         }
     }
 

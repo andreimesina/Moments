@@ -18,6 +18,7 @@ import android.widget.Toast;
 import com.andreimesina.moments.model.Moment;
 import com.andreimesina.moments.utils.ActivityUtils;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -75,6 +76,7 @@ public class MomentAdapter extends RecyclerView.Adapter<MomentAdapter.MomentHold
                 .load(currentMoment.getImageUrl())
                 .transition(DrawableTransitionOptions.withCrossFade())
                 .centerCrop()
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
                 .into(momentHolder.imageView);
     }
 
