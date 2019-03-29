@@ -59,7 +59,27 @@ public class MomentAdapter extends RecyclerView.Adapter<MomentAdapter.MomentHold
     @Override
     public void onBindViewHolder(@NonNull MomentHolder momentHolder, int position) {
         Moment currentMoment = mMoments.get(position);
-        momentHolder.textViewStory.setText(currentMoment.getStory());
+        String story = currentMoment.getStory();
+        String location = currentMoment.getLocation();
+
+        if(story.length() > 0) {
+            momentHolder.textViewStory.setText("Story: " + currentMoment.getStory());
+        } else {
+            momentHolder.textViewStory.setText("No story");
+        }
+
+        if(location.length() > 0) {
+            momentHolder.textViewLocation.setVisibility(View.VISIBLE);
+            momentHolder.textViewLocation.setText("Location: " + currentMoment.getLocation());
+        } else {
+            momentHolder.textViewLocation.setVisibility(View.GONE);
+        }
+
+        TextView moreView = momentHolder.itemView.findViewById(R.id.text_more);
+
+        if(momentHolder.textViewStory.getLineCount() > 1) {
+            moreView.setVisibility(View.VISIBLE);
+        }
 
         loadImage(momentHolder, currentMoment);
         setLastItemMargin(momentHolder, position);
@@ -166,12 +186,14 @@ public class MomentAdapter extends RecyclerView.Adapter<MomentAdapter.MomentHold
     public class MomentHolder extends RecyclerView.ViewHolder {
         public ImageView imageView;
         public TextView textViewStory;
+        public TextView textViewLocation;
 
         public MomentHolder(View itemView) {
             super(itemView);
 
             imageView = itemView.findViewById(R.id.image_preview_card);
             textViewStory = itemView.findViewById(R.id.text_story_card);
+            textViewLocation = itemView.findViewById(R.id.text_location_card);
         }
     }
 }

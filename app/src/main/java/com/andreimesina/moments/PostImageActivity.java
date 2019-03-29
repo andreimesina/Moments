@@ -154,8 +154,11 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
         if (v.getId() == R.id.btn_save_post) {
             SharedPreferencesUtils.setString(this, "image_action",
                     "save");
+            String story = (mEditTextStory.getText().toString().length() > 100)
+                    ? mEditTextStory.getText().toString().substring(0, 100) + "..."
+                    : mEditTextStory.getText().toString();
             SharedPreferencesUtils.setString(this, "image_story",
-                    mEditTextStory.getText().toString());
+                    story);
             SharedPreferencesUtils.setString(this, "image_location",
                     mEditTextLocation.getText().toString());
             finish();
