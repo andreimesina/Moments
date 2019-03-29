@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/about_us_layout"
     app:layout_behavior="@string/hide_bottom_view_on_scroll_behavior"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/bg_img">
+    android:layout_height="match_parent">
 
     <TextView
         android:id="@+id/textView3"
