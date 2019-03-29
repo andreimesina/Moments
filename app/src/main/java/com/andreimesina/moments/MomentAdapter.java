@@ -1,6 +1,7 @@
 package com.andreimesina.moments;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -46,11 +47,11 @@ public class MomentAdapter extends RecyclerView.Adapter<MomentAdapter.MomentHold
 
     @NonNull
     @Override
-    public MomentHolder onCreateViewHolder(@NonNull ViewGroup parent, int i) {
+    public MomentHolder onCreateViewHolder(@NonNull ViewGroup parent, int position) {
         View view = LayoutInflater.from(mContext).inflate(R.layout.item_moment,
                 parent, false);
 
-        Moment currentMoment = mMoments.get(i);
+        Moment currentMoment = mMoments.get(position);
         view.setTag(currentMoment.getImageUrl());
 
         return new MomentHolder(view);
@@ -59,31 +60,29 @@ public class MomentAdapter extends RecyclerView.Adapter<MomentAdapter.MomentHold
     @Override
     public void onBindViewHolder(@NonNull MomentHolder momentHolder, int position) {
         Moment currentMoment = mMoments.get(position);
+        ImageView imageView = momentHolder.itemView.findViewById(R.id.image_preview_card);
+        TextView textViewStory = momentHolder.itemView.findViewById(R.id.text_story_card);
+        TextView textViewLocation = momentHolder.itemView.findViewById(R.id.text_location_card);
         String story = currentMoment.getStory();
         String location = currentMoment.getLocation();
 
         if(story.length() > 0) {
-            momentHolder.textViewStory.setText("Story: " + currentMoment.getStory());
+            textViewStory.setText("Story: " + currentMoment.getStory());
         } else {
-            momentHolder.textViewStory.setText("No story");
+            textViewStory.setText("No story");
         }
 
         if(location.length() > 0) {
-            momentHolder.textViewLocation.setVisibility(View.VISIBLE);
-            momentHolder.textViewLocation.setText("Location: " + currentMoment.getLocation());
+            textViewLocation.setVisibility(View.VISIBLE);
+            textViewLocation.setText("Location: " + currentMoment.getLocation());
         } else {
-            momentHolder.textViewLocation.setVisibility(View.GONE);
+            textViewLocation.setVisibility(View.GONE);
         }
 
-        TextView moreView = momentHolder.itemView.findViewById(R.id.text_more);
-
-        if(momentHolder.textViewStory.getLineCount() > 1) {
-            moreView.setVisibility(View.VISIBLE);
-        }
-
-        loadImage(momentHolder, currentMoment);
+        loadImage(imageView, currentMoment);
         setLastItemMargin(momentHolder, position);
         listenForMenuOptionsClick(momentHolder, currentMoment);
+        listenForImageClick(momentHolder, currentMoment);
     }
 
     @Override
@@ -91,13 +90,12 @@ public class MomentAdapter extends RecyclerView.Adapter<MomentAdapter.MomentHold
         return mMoments.size();
     }
 
-    private void loadImage(@NonNull MomentHolder momentHolder, Moment currentMoment) {
+    private void loadImage(ImageView imageView, Moment currentMoment) {
         Glide.with(mContext)
                 .load(currentMoment.getImageUrl())
                 .transition(DrawableTransitionOptions.withCrossFade())
-                .centerCrop()
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .into(momentHolder.imageView);
+                .into(imageView);
     }
 
     private void setLastItemMargin(@NonNull MomentHolder momentHolder, int position) {
@@ -130,6 +128,20 @@ public class MomentAdapter extends RecyclerView.Adapter<MomentAdapter.MomentHold
         });
     }
 
+    private void listenForImageClick(@NonNull final MomentHolder momentHolder, final Moment currentMoment) {
+        ImageView imageView = momentHolder.itemView.findViewById(R.id.image_preview_card);
+
+        imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(momentHolder.itemView.getContext(), ViewImageActivity.class);
+
+                intent.putExtra("URL", currentMoment.getImageUrl());
+                momentHolder.itemView.getContext().startActivity(intent);
+            }
+        });
+    }
+
     private void showOptionsMenu(View view, final Moment currentMoment) {
         PopupMenu popupMenu = new PopupMenu(mContext, view);
         MenuInflater menuInflater = popupMenu.getMenuInflater();
@@ -138,7 +150,7 @@ public class MomentAdapter extends RecyclerView.Adapter<MomentAdapter.MomentHold
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 if(item.getItemId() == R.id.item_card_edit) {
-                    Toast.makeText(mContext, "Edit", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mContext, "Edit " + currentMoment.getStory(), Toast.LENGTH_SHORT).show();
                     return true;
                 } else if(item.getItemId() == R.id.item_card_delete) {
                     deleteImageFromFirebase(currentMoment);

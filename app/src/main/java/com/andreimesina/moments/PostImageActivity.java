@@ -1,23 +1,23 @@
 package com.andreimesina.moments;
 
 import android.content.Intent;
-import android.media.ExifInterface;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 
-import com.andreimesina.moments.utils.ActivityUtils;
 import com.andreimesina.moments.utils.SharedPreferencesUtils;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
-import com.dmallcott.dismissibleimageview.DismissibleImageView;
 
 import java.io.File;
 
@@ -32,7 +32,7 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
 
     private EditText mEditTextStory;
     private EditText mEditTextLocation;
-    private DismissibleImageView mImageView;
+    private ImageView mImageView;
     private Button mBtnSave;
     private Button mBtnCancel;
 
@@ -44,7 +44,9 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
         setViews();
         initToolbar();
         getImageFromCamera();
+        setFieldsListener();
         setButtonsListener();
+        setImageListener();
     }
 
     @Override
@@ -59,10 +61,9 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
     protected void onStop() {
         super.onStop();
 
-        if(SharedPreferencesUtils.getString(this, "image_action").equalsIgnoreCase("save")) {
+        if(SharedPreferencesUtils.getString(this, "image_action").equalsIgnoreCase("cancel")) {
             deleteCurrentImage();
         }
-        finish();
     }
 
     private void setViews() {
@@ -96,9 +97,89 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
         mDrawerLayout.addDrawerListener(mDrawerToggle);
     }
 
+    private void setFieldsListener() {
+        mEditTextStory.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if(!hasFocus) {
+                    if(isGoodStory() && isGoodLocation()) {
+                        enableSaveButton();
+                    } else {
+                        disableSaveButton();
+                    }
+                }
+            }
+        });
+
+        mEditTextLocation.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if(!hasFocus) {
+                    if(isGoodStory() && isGoodLocation()) {
+                        enableSaveButton();
+                    } else {
+                        disableSaveButton();
+                    }
+                }
+            }
+        });
+
+        TextWatcher storyTextWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if(isGoodStory() && isGoodLocation()) {
+                    enableSaveButton();
+                } else {
+                    disableSaveButton();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) { }
+        };
+
+        TextWatcher locationTextWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if(isGoodStory() && isGoodLocation()) {
+                    enableSaveButton();
+                } else {
+                    disableSaveButton();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) { }
+        };
+
+        mEditTextStory.addTextChangedListener(storyTextWatcher);
+        mEditTextLocation.addTextChangedListener(locationTextWatcher);
+    }
+
     private void setButtonsListener() {
         mBtnSave.setOnClickListener(this);
         mBtnCancel.setOnClickListener(this);
+
+        disableSaveButton();
+    }
+
+    private void setImageListener() {
+        mImageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(PostImageActivity.this, ViewImageActivity.class);
+
+                intent.putExtra("URL", currentImagePath);
+                startActivity(intent);
+            }
+        });
+
     }
 
     private void getImageFromCamera() {
@@ -106,37 +187,56 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
 
         if (intent != null) {
             currentImagePath = intent.getExtras().get("image_path").toString();
-            setImageScale();
 
             if (currentImagePath != null) {
                 Glide.with(this)
                         .load(currentImagePath)
                         .transition(DrawableTransitionOptions.withCrossFade())
-                        .centerCrop()
                         .into(mImageView);
             }
 
         }
     }
 
-    private void setImageScale() {
-        int orientation;
-
-        try {
-            orientation = ActivityUtils.getImageOrientation(currentImagePath);
-        } catch (Exception e) {
-            return ;
-        }
-
-        if(orientation == ExifInterface.ORIENTATION_ROTATE_90 ||
-                orientation == ExifInterface.ORIENTATION_ROTATE_270) {
-//            mImageView.setScaleType(ImageView.ScaleType.CENTER);
-        }
-    }
-
     private void deleteCurrentImage() {
         File file = new File(currentImagePath);
         file.delete();
+    }
+
+    private boolean isGoodStory() {
+        if(mEditTextStory.getText().toString().length() == 0) {
+            mEditTextStory.setError("Tell us your story!");
+            return false;
+        } else if(mEditTextStory.getText().toString().length() > 100) {
+            mEditTextStory.setError("Story must be max. 100 characters long!");
+            return false;
+        } else {
+            mEditTextStory.setError(null);
+            return true;
+        }
+    }
+
+    private boolean isGoodLocation() {
+        if(mEditTextLocation.getText().toString().length() == 0) {
+            mEditTextLocation.setError("Where have you been?");
+            return false;
+        } else if(mEditTextLocation.getText().toString().length() > 25) {
+            mEditTextLocation.setError("Location must be max. 25 characters long!");
+            return false;
+        } else {
+            mEditTextLocation.setError(null);
+            return true;
+        }
+    }
+
+    private void disableSaveButton() {
+        mBtnSave.setEnabled(false);
+        mBtnSave.setBackground(getResources().getDrawable(R.drawable.btn_disabled_shape));
+    }
+
+    private void enableSaveButton() {
+        mBtnSave.setEnabled(true);
+        mBtnSave.setBackground(getResources().getDrawable(R.drawable.btn_shape));
     }
 
     @Override
@@ -169,5 +269,11 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
             deleteCurrentImage();
             finish();
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        SharedPreferencesUtils.setString(this, "image_action", "cancel");
+        super.onBackPressed();
     }
 }

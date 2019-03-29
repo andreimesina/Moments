@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 // app version
 ext.majorVersion = 0
-ext.minorVersion = 22
+ext.minorVersion = 23
 ext.patchVersion = 0
 ext.preRelease = "alpha.2"
 
@@ -72,9 +72,6 @@ dependencies {
     // Glide
     implementation 'com.github.bumptech.glide:glide:4.9.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.9.0'
-
-    // Dismissible Image View
-    implementation 'com.github.dmallcott:DismissibleImageView:1.0.2'
 
     testImplementation "junit:junit:$project.jUnitVersion"
     androidTestImplementation 'com.android.support.test:runner:1.0.2'

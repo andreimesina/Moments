@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v4.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/drawer_layout_post"
@@ -46,7 +47,7 @@
                     android:id="@+id/et_image_story"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Story (max. 100 characters)"
+                    android:hint="Story"
                     android:inputType="text" />
             </android.support.design.widget.TextInputLayout>
 
@@ -82,7 +83,7 @@
                 app:layout_constraintGuide_percent="0.25"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <com.dmallcott.dismissibleimageview.DismissibleImageView
+            <ImageView
                 android:id="@+id/image_post"
                 android:layout_width="0dp"
                 android:layout_height="0dp"
