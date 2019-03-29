@@ -21,9 +21,9 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 
 import java.io.File;
 
-public class PostImageActivity extends AppCompatActivity implements View.OnClickListener {
+public class PostEditImageActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private static final String TAG = "PostImageActivity";
+    private static final String TAG = "PostEditImageActivity";
 
     private String currentImagePath;
 
@@ -36,14 +36,34 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
     private Button mBtnSave;
     private Button mBtnCancel;
 
+    private String mImageFilename;
+    private String mImageStory;
+    private String mImageLocation;
+    private boolean isEdit = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_post_image);
 
         setViews();
+
+        Intent intent = getIntent();
+        if(intent != null) {
+            if(intent.getStringExtra("image_story") != null
+                    && intent.getStringExtra("image_location") != null) {
+                mImageFilename = intent.getStringExtra("image_filename");
+                mImageStory = intent.getStringExtra("image_story");
+                mImageLocation = intent.getStringExtra("image_location");
+                loadFields();
+                isEdit = true;
+            }
+
+            currentImagePath = intent.getStringExtra("image_url");
+            loadImage();
+        }
+
         initToolbar();
-        getImageFromCamera();
         setFieldsListener();
         setButtonsListener();
         setImageListener();
@@ -87,7 +107,11 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
 
-        setTitle("Save image");
+        if(isEdit) {
+            setTitle("Edit Moment");
+        } else {
+            setTitle("Save Moment");
+        }
 
         // Add toggle for a cool animation
         mDrawerLayout = findViewById(R.id.drawer_layout_post);
@@ -102,11 +126,7 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if(!hasFocus) {
-                    if(isGoodStory() && isGoodLocation()) {
-                        enableSaveButton();
-                    } else {
-                        disableSaveButton();
-                    }
+                    checkStory();
                 }
             }
         });
@@ -115,11 +135,7 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
             @Override
             public void onFocusChange(View v, boolean hasFocus) {
                 if(!hasFocus) {
-                    if(isGoodStory() && isGoodLocation()) {
-                        enableSaveButton();
-                    } else {
-                        disableSaveButton();
-                    }
+                    checkLocation();
                 }
             }
         });
@@ -130,11 +146,7 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if(isGoodStory() && isGoodLocation()) {
-                    enableSaveButton();
-                } else {
-                    disableSaveButton();
-                }
+                checkStory();
             }
 
             @Override
@@ -147,11 +159,7 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if(isGoodStory() && isGoodLocation()) {
-                    enableSaveButton();
-                } else {
-                    disableSaveButton();
-                }
+                checkLocation();
             }
 
             @Override
@@ -173,28 +181,31 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
         mImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(PostImageActivity.this, ViewImageActivity.class);
+                Intent intent = new Intent(PostEditImageActivity.this, ViewImageActivity.class);
 
-                intent.putExtra("URL", currentImagePath);
+                intent.putExtra("image_url", currentImagePath);
                 startActivity(intent);
             }
         });
 
     }
 
-    private void getImageFromCamera() {
-        Intent intent = getIntent();
+    private void loadFields() {
+        if(mImageStory != null && mImageStory.length() > 0) {
+            mEditTextStory.setText(mImageStory);
+        }
 
-        if (intent != null) {
-            currentImagePath = intent.getExtras().get("image_path").toString();
+        if(mImageLocation != null && mImageStory.length() > 0) {
+            mEditTextLocation.setText(mImageLocation);
+        }
+    }
 
-            if (currentImagePath != null) {
-                Glide.with(this)
-                        .load(currentImagePath)
-                        .transition(DrawableTransitionOptions.withCrossFade())
-                        .into(mImageView);
-            }
-
+    private void loadImage() {
+        if (currentImagePath != null) {
+            Glide.with(this)
+                    .load(currentImagePath)
+                    .transition(DrawableTransitionOptions.withCrossFade())
+                    .into(mImageView);
         }
     }
 
@@ -203,30 +214,92 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
         file.delete();
     }
 
+    private void checkStory() {
+        if(isFieldEmpty(mEditTextStory)) {
+            mEditTextStory.setError("What is your story?");
+            disableSaveButton();
+        } else if(isFieldTooLong(mEditTextStory, 100)) {
+            mEditTextStory.setError("Your story must be max. 100 characters long!");
+            disableSaveButton();
+        } else if(isSameStory()) {
+            mEditTextStory.setError("Your story is the same!");
+            disableSaveButton();
+        } else if(isGoodLocation()) {
+            mEditTextStory.setError(null);
+            enableSaveButton();
+        }
+    }
+
+    private void checkLocation() {
+        if(isFieldEmpty(mEditTextLocation)) {
+            mEditTextLocation.setError("Where have you been?");
+            disableSaveButton();
+        } else if(isFieldTooLong(mEditTextLocation, 25)) {
+            mEditTextLocation.setError("Your location must be max. 25 characters long!");
+            disableSaveButton();
+        } else if(isSameLocation()) {
+            mEditTextLocation.setError("Your location is the same!");
+            disableSaveButton();
+        } else if(isGoodStory()) {
+            mEditTextLocation.setError(null);
+            enableSaveButton();
+        }
+    }
+
     private boolean isGoodStory() {
-        if(mEditTextStory.getText().toString().length() == 0) {
-            mEditTextStory.setError("Tell us your story!");
+        if(isFieldEmpty(mEditTextStory)) {
             return false;
-        } else if(mEditTextStory.getText().toString().length() > 100) {
-            mEditTextStory.setError("Story must be max. 100 characters long!");
+        } else if(isFieldTooLong(mEditTextStory, 100)) {
+            return false;
+        } else if(isSameStory()) {
             return false;
         } else {
-            mEditTextStory.setError(null);
             return true;
         }
     }
 
     private boolean isGoodLocation() {
-        if(mEditTextLocation.getText().toString().length() == 0) {
-            mEditTextLocation.setError("Where have you been?");
+        if(isFieldEmpty(mEditTextLocation)) {
             return false;
-        } else if(mEditTextLocation.getText().toString().length() > 25) {
-            mEditTextLocation.setError("Location must be max. 25 characters long!");
+        } else if(isFieldTooLong(mEditTextLocation, 25)) {
+            return false;
+        } else if(isSameLocation()) {
             return false;
         } else {
-            mEditTextLocation.setError(null);
             return true;
         }
+    }
+
+    private boolean isFieldEmpty(EditText et) {
+        return et.getText().toString().length() == 0;
+    }
+
+    private boolean isFieldTooLong(EditText et, int limit) {
+        if(et.getText().toString().length() > limit) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private boolean isSameStory() {
+        if(mImageStory != null && mImageStory.length() > 0) {
+            if(mEditTextStory.getText().toString().equals(mImageStory)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean isSameLocation() {
+        if(mImageLocation != null && mImageLocation.length() > 0) {
+            if(mEditTextLocation.getText().toString().equals(mImageLocation)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void disableSaveButton() {
@@ -252,13 +325,18 @@ public class PostImageActivity extends AppCompatActivity implements View.OnClick
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.btn_save_post) {
-            SharedPreferencesUtils.setString(this, "image_action",
-                    "save");
-            String story = (mEditTextStory.getText().toString().length() > 100)
-                    ? mEditTextStory.getText().toString().substring(0, 100) + "..."
-                    : mEditTextStory.getText().toString();
+            if(isEdit == false) {
+                SharedPreferencesUtils.setString(this, "image_action",
+                        "save");
+            } else {
+                SharedPreferencesUtils.setString(this, "image_action",
+                        "edit");
+                SharedPreferencesUtils.setString(this, "image_filename",
+                        mImageFilename);
+            }
+
             SharedPreferencesUtils.setString(this, "image_story",
-                    story);
+                    mEditTextStory.getText().toString());
             SharedPreferencesUtils.setString(this, "image_location",
                     mEditTextLocation.getText().toString());
             finish();

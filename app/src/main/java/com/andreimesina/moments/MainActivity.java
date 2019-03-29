@@ -164,7 +164,6 @@ public class MainActivity extends AppCompatActivity {
         String imageAction = SharedPreferencesUtils.getString(this, "image_action");
         if(imageAction.equalsIgnoreCase("save") && (mUploadTask == null
                 || (mUploadTask != null && mUploadTask.isInProgress() == false))) {
-            // TODO: add image to list
             try {
                 compressImage();
                 deleteBigImage();
@@ -180,10 +179,21 @@ public class MainActivity extends AppCompatActivity {
                     filename.replace(".jpeg", "c.jpeg"));
 
             SharedPreferencesUtils.deleteValue(this, "image_action");
+            SharedPreferencesUtils.deleteValue(this, "image_filename");
             SharedPreferencesUtils.deleteValue(this, "image_story");
             SharedPreferencesUtils.deleteValue(this, "image_location");
-            SharedPreferencesUtils.deleteValue(this, "image_filename");
 
+        } else if(imageAction.equalsIgnoreCase("edit")) {
+            String filename = SharedPreferencesUtils.getString(this, "image_filename");
+            String story = SharedPreferencesUtils.getString(this, "image_story");
+            String location = SharedPreferencesUtils.getString(this, "image_location");
+
+            updateImage(filename, story, location);
+
+            SharedPreferencesUtils.deleteValue(this, "image_action");
+            SharedPreferencesUtils.deleteValue(this, "image_filename");
+            SharedPreferencesUtils.deleteValue(this, "image_story");
+            SharedPreferencesUtils.deleteValue(this, "image_location");
         } else if(imageAction.equalsIgnoreCase("cancel")) {
             SharedPreferencesUtils.deleteValue(this, "image_action");
             SharedPreferencesUtils.deleteValue(this, "image_filename");
@@ -199,9 +209,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void goToPostActivity() {
-        Intent intent = new Intent(this, PostImageActivity.class);
+        Intent intent = new Intent(MainActivity.this, PostEditImageActivity.class);
         intent.putExtra("image_uri", currentImageUri);
-        intent.putExtra("image_path", currentImagePath);
+        intent.putExtra("image_url", currentImagePath);
 
         startActivity(intent);
     }
@@ -468,6 +478,27 @@ public class MainActivity extends AppCompatActivity {
             public void onFailure(@NonNull Exception e) {
                 Toast.makeText(MainActivity.this, "Image upload failed!",
                         Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void updateImage(String filename, String story, String location) {
+        Map<String, String> moment = new HashMap<>();
+        moment.put("story", story);
+        moment.put("location", location);
+
+        mFirestore
+                .collection("users").document(mUser.getUid())
+                .collection("images").document(filename)
+                .set(moment, SetOptions.merge())
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) { }
+                }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Toast.makeText(MainActivity.this, "Failed to update image information!",
+                        Toast.LENGTH_SHORT).show();
             }
         });
     }

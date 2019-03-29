@@ -136,13 +136,15 @@ public class MomentAdapter extends RecyclerView.Adapter<MomentAdapter.MomentHold
             public void onClick(View v) {
                 Intent intent = new Intent(momentHolder.itemView.getContext(), ViewImageActivity.class);
 
-                intent.putExtra("URL", currentMoment.getImageUrl());
+                intent.putExtra("image_url", currentMoment.getImageUrl());
+                intent.putExtra("image_story", currentMoment.getStory());
+                intent.putExtra("image_location", currentMoment.getLocation());
                 momentHolder.itemView.getContext().startActivity(intent);
             }
         });
     }
 
-    private void showOptionsMenu(View view, final Moment currentMoment) {
+    private void showOptionsMenu(final View view, final Moment currentMoment) {
         PopupMenu popupMenu = new PopupMenu(mContext, view);
         MenuInflater menuInflater = popupMenu.getMenuInflater();
         menuInflater.inflate(R.menu.card_menu, popupMenu.getMenu());
@@ -150,7 +152,7 @@ public class MomentAdapter extends RecyclerView.Adapter<MomentAdapter.MomentHold
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 if(item.getItemId() == R.id.item_card_edit) {
-                    Toast.makeText(mContext, "Edit " + currentMoment.getStory(), Toast.LENGTH_SHORT).show();
+                    editImage(view, currentMoment);
                     return true;
                 } else if(item.getItemId() == R.id.item_card_delete) {
                     deleteImageFromFirebase(currentMoment);
@@ -161,6 +163,16 @@ public class MomentAdapter extends RecyclerView.Adapter<MomentAdapter.MomentHold
         });
 
         popupMenu.show();
+    }
+
+    private void editImage(View view, Moment currentMoment) {
+        Intent intent = new Intent(view.getContext(), PostEditImageActivity.class);
+
+        intent.putExtra("image_filename", currentMoment.getFilename());
+        intent.putExtra("image_url", currentMoment.getImageUrl());
+        intent.putExtra("image_story", currentMoment.getStory());
+        intent.putExtra("image_location", currentMoment.getLocation());
+        view.getContext().startActivity(intent);
     }
 
     private void deleteImageFromFirebase(final Moment moment) {

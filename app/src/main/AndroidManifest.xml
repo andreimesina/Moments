@@ -35,7 +35,7 @@
             android:name=".MainActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".PostImageActivity"
+            android:name=".PostEditImageActivity"
             android:screenOrientation="portrait" />
         <activity
             android:name=".ViewImageActivity"

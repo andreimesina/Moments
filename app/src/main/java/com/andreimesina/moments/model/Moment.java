@@ -2,6 +2,7 @@ package com.andreimesina.moments.model;
 
 public class Moment {
 
+    // Firestore online filename
     private String filename;
     private String imageUrl;
     private String story;

@@ -23,6 +23,7 @@ import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
@@ -92,7 +93,8 @@ public class ContentFragment extends Fragment {
         CollectionReference collectionReference = mFirestore.collection("users")
                 .document(mAuth.getUid()).collection("images");
 
-        mListener = collectionReference.addSnapshotListener(new EventListener<QuerySnapshot>() {
+        mListener = collectionReference.addSnapshotListener(MetadataChanges.INCLUDE,
+                    new EventListener<QuerySnapshot>() {
                 @Override
                 public void onEvent(@Nullable QuerySnapshot values,
                                     @Nullable FirebaseFirestoreException e) {
@@ -110,6 +112,7 @@ public class ContentFragment extends Fragment {
                                 mMoments.add(0, dc.getDocument().toObject(Moment.class));
                                 break;
                             case MODIFIED:
+                                updateMoment(dc.getDocument().toObject(Moment.class));
                                 break;
                             case REMOVED:
                                 removeMoment(dc.getDocument().toObject(Moment.class));
@@ -134,9 +137,19 @@ public class ContentFragment extends Fragment {
         activity.findViewById(R.id.fab_add_image).setVisibility(View.VISIBLE);
     }
 
+    private void updateMoment(Moment moment) {
+        for(int i = 0; i < mMoments.size(); i++) {
+            if(mMoments.get(i).getImageUrl().equals(moment.getImageUrl())) {
+                mMoments.get(i).setStory(moment.getStory());
+                mMoments.get(i).setLocation(moment.getLocation());
+                break;
+            }
+        }
+    }
+
     private void removeMoment(Moment moment) {
         for(int i = 0; i < mMoments.size(); i++) {
-            if(mMoments.get(i).getImageUrl().equalsIgnoreCase(moment.getImageUrl())) {
+            if(mMoments.get(i).getImageUrl().equals(moment.getImageUrl())) {
                 mMoments.remove(i);
                 break;
             }

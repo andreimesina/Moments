@@ -37,8 +37,8 @@ public class ViewImageActivity extends AppCompatActivity {
         initToolbar();
 
         Intent intent = getIntent();
-        if(intent != null && intent.hasExtra("URL")) {
-            mImageUrl = intent.getStringExtra("URL");
+        if(intent != null && intent.getStringExtra("image_url") != null) {
+            mImageUrl = intent.getStringExtra("image_url");
 
             if(mImageUrl.length() > 0) {
                 mImageView = findViewById(R.id.image_img);
