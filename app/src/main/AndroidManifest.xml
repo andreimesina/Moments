@@ -39,6 +39,9 @@
             android:screenOrientation="portrait" />
         <activity
             android:name=".ViewImageActivity"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".PrivacyPolicyActivity"
             android:screenOrientation="portrait"/>
         <provider
             android:name="android.support.v4.content.FileProvider"
@@ -49,7 +52,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-4791318943765971~3082630931" />

@@ -263,7 +263,6 @@ public class MainActivity extends AppCompatActivity {
         user.put("photoUrl", mUser.getPhotoUrl().toString());
         user.put("name", mUser.getDisplayName());
         user.put("email", mUser.getEmail());
-        user.put("phone", mUser.getPhoneNumber());
 
         mFirestore.collection("users").document(mAuth.getUid())
                 .set(user, SetOptions.merge());

@@ -6,7 +6,6 @@ public class User {
     private String photoUrl;
     private String email;
     private String name;
-    private String phone;
     
     private static volatile User instance;
     
@@ -35,7 +34,6 @@ public class User {
         photoUrl = "";
         email = "";
         name = "";
-        phone = "";
     }
 
     public String getUserId() {
@@ -68,13 +66,5 @@ public class User {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
     }
 }
