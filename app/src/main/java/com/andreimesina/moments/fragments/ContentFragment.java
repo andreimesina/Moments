@@ -37,6 +37,9 @@ public class ContentFragment extends Fragment {
     private MomentAdapter mAdapter;
 
     private ProgressBar mProgressBar;
+    private View mGroupWelcome;
+
+    private boolean isWelcomeVisible = false;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore mFirestore;
@@ -67,6 +70,13 @@ public class ContentFragment extends Fragment {
         initRecyclerView(thisActivity);
         listenForMoments();
         setFloatingActionButton(thisActivity);
+
+        mGroupWelcome = getActivity().findViewById(R.id.group_welcome);
+        if(mAdapter.getItemCount() == 0) {
+            showWelcome();
+        } else {
+            hideWelcome();
+        }
     }
 
     @Override
@@ -110,6 +120,10 @@ public class ContentFragment extends Fragment {
                             case ADDED:
                                 dc.getDocument().toObject(Moment.class);
                                 mMoments.add(0, dc.getDocument().toObject(Moment.class));
+
+                                if(isWelcomeVisible) {
+                                    hideWelcome();
+                                }
                                 break;
                             case MODIFIED:
                                 updateMoment(dc.getDocument().toObject(Moment.class));
@@ -135,6 +149,16 @@ public class ContentFragment extends Fragment {
 
     private void setFloatingActionButton(Activity activity) {
         activity.findViewById(R.id.fab_add_image).setVisibility(View.VISIBLE);
+    }
+
+    private void showWelcome() {
+        mGroupWelcome.setVisibility(View.VISIBLE);
+        isWelcomeVisible = true;
+    }
+
+    private void hideWelcome() {
+        mGroupWelcome.setVisibility(View.GONE);
+        isWelcomeVisible = false;
     }
 
     private void updateMoment(Moment moment) {
