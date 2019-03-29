@@ -44,7 +44,7 @@ public class PostEditImageActivity extends AppCompatActivity implements View.OnC
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_post_image);
+        setContentView(R.layout.activity_post_edit_image);
 
         setViews();
 
@@ -221,7 +221,7 @@ public class PostEditImageActivity extends AppCompatActivity implements View.OnC
         } else if(isFieldTooLong(mEditTextStory, 100)) {
             mEditTextStory.setError("Your story must be max. 100 characters long!");
             disableSaveButton();
-        } else if(isSameStory()) {
+        } else if(isEdit && isSameStory() && isSameLocation()) {
             mEditTextStory.setError("Your story is the same!");
             disableSaveButton();
         } else if(isGoodLocation()) {
@@ -237,7 +237,7 @@ public class PostEditImageActivity extends AppCompatActivity implements View.OnC
         } else if(isFieldTooLong(mEditTextLocation, 25)) {
             mEditTextLocation.setError("Your location must be max. 25 characters long!");
             disableSaveButton();
-        } else if(isSameLocation()) {
+        } else if(isEdit && isSameLocation() && isSameStory()) {
             mEditTextLocation.setError("Your location is the same!");
             disableSaveButton();
         } else if(isGoodStory()) {
@@ -251,8 +251,6 @@ public class PostEditImageActivity extends AppCompatActivity implements View.OnC
             return false;
         } else if(isFieldTooLong(mEditTextStory, 100)) {
             return false;
-        } else if(isSameStory()) {
-            return false;
         } else {
             return true;
         }
@@ -262,8 +260,6 @@ public class PostEditImageActivity extends AppCompatActivity implements View.OnC
         if(isFieldEmpty(mEditTextLocation)) {
             return false;
         } else if(isFieldTooLong(mEditTextLocation, 25)) {
-            return false;
-        } else if(isSameLocation()) {
             return false;
         } else {
             return true;
