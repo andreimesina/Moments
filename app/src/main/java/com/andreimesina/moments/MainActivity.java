@@ -260,8 +260,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void initUser() {
         Map<String, String> user = new HashMap<>();
-        user.put("photoUrl", mUser.getPhotoUrl().toString());
-        user.put("name", mUser.getDisplayName());
+        if(mUser.getPhotoUrl() != null) {
+            user.put("photoUrl", mUser.getPhotoUrl().toString());
+        }
+        if(mUser.getDisplayName() != null) {
+            user.put("name", mUser.getDisplayName());
+        }
         user.put("email", mUser.getEmail());
 
         mFirestore.collection("users").document(mAuth.getUid())
@@ -342,6 +346,8 @@ public class MainActivity extends AppCompatActivity {
 
         Glide.with(this)
                 .load(mUser.getPhotoUrl())
+                .error(R.drawable.blank_profile_picture)
+                .centerCrop()
                 .into(userPic);
 
         userName.setText(mUser.getDisplayName());
