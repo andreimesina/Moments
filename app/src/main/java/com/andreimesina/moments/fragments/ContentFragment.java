@@ -39,8 +39,6 @@ public class ContentFragment extends Fragment {
     private ProgressBar mProgressBar;
     private View mGroupWelcome;
 
-    private boolean isWelcomeVisible = false;
-
     private FirebaseAuth mAuth;
     private FirebaseFirestore mFirestore;
     private ListenerRegistration mListener;
@@ -72,11 +70,18 @@ public class ContentFragment extends Fragment {
         setFloatingActionButton(thisActivity);
 
         mGroupWelcome = getActivity().findViewById(R.id.group_welcome);
-        if(mAdapter.getItemCount() == 0) {
-            showWelcome();
-        } else {
-            hideWelcome();
-        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        showWelcome();
+    }
+
+    @Override
+    public void onStop() {
+        hideWelcome();
+        super.onStop();
     }
 
     @Override
@@ -118,12 +123,7 @@ public class ContentFragment extends Fragment {
                     for (DocumentChange dc : values.getDocumentChanges()) {
                         switch (dc.getType()) {
                             case ADDED:
-                                dc.getDocument().toObject(Moment.class);
-                                mMoments.add(0, dc.getDocument().toObject(Moment.class));
-
-                                if(isWelcomeVisible) {
-                                    hideWelcome();
-                                }
+                                addMoment(dc.getDocument().toObject(Moment.class));
                                 break;
                             case MODIFIED:
                                 updateMoment(dc.getDocument().toObject(Moment.class));
@@ -135,6 +135,12 @@ public class ContentFragment extends Fragment {
                     }
 
                     mAdapter.notifyDataSetChanged();
+
+                    if(mAdapter.getItemCount() == 0) {
+                        showWelcome();
+                    } else {
+                        hideWelcome();
+                    }
 
                     Handler handler = new Handler();
                     handler.postDelayed(new Runnable() {
@@ -153,12 +159,14 @@ public class ContentFragment extends Fragment {
 
     private void showWelcome() {
         mGroupWelcome.setVisibility(View.VISIBLE);
-        isWelcomeVisible = true;
     }
 
     private void hideWelcome() {
         mGroupWelcome.setVisibility(View.GONE);
-        isWelcomeVisible = false;
+    }
+
+    private void addMoment(Moment moment) {
+        mMoments.add(0, moment);
     }
 
     private void updateMoment(Moment moment) {

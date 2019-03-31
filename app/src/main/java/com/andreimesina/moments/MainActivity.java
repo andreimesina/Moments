@@ -1,6 +1,7 @@
 package com.andreimesina.moments;
 
 import android.Manifest;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -21,6 +22,7 @@ import android.support.v4.content.FileProvider;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -194,6 +196,7 @@ public class MainActivity extends AppCompatActivity {
             SharedPreferencesUtils.deleteValue(this, "image_filename");
             SharedPreferencesUtils.deleteValue(this, "image_story");
             SharedPreferencesUtils.deleteValue(this, "image_location");
+
         } else if(imageAction.equalsIgnoreCase("cancel")) {
             SharedPreferencesUtils.deleteValue(this, "image_action");
             SharedPreferencesUtils.deleteValue(this, "image_filename");
@@ -206,6 +209,21 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_CAMERA && resultCode == RESULT_OK) {
             goToPostActivity();
         }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        switch(requestCode) {
+            case PERMISSION_REQUEST_CODE:
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    dispatchTakePictureIntent();
+                } else {
+                    Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
+                }
+                return;
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     private void goToPostActivity() {
@@ -229,15 +247,6 @@ public class MainActivity extends AppCompatActivity {
 
         finishAffinity();
         ActivityUtils.goToActivity(MainActivity.this, LoginActivity.class);
-    }
-
-    private boolean checkPermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-                != PackageManager.PERMISSION_GRANTED) {
-            // Permission is not granted
-            return false;
-        }
-        return true;
     }
 
     private void initFirebase() {
@@ -361,11 +370,43 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if(checkPermission()) {
                     dispatchTakePictureIntent();
+                } else if(shouldShowPermissionExplanation()) {
+                    showExplanationDialog();
                 } else {
                     requestPermission();
                 }
             }
         });
+    }
+
+    private boolean checkPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    private boolean shouldShowPermissionExplanation() {
+        return ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA);
+    }
+
+    private void showExplanationDialog() {
+        new AlertDialog.Builder(this)
+                .setMessage("If you want to take pictures, " +
+                        "the application needs permission to use your camera.")
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        requestPermission();
+                    }
+                })
+                .setNegativeButton("NOT NOW", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) { }
+                })
+                .show();
     }
 
     private void requestPermission() {

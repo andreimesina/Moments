@@ -224,21 +224,15 @@ public class PostEditImageActivity extends AppCompatActivity implements View.OnC
         } else if(isEdit && isSameStory() && isSameLocation()) {
             mEditTextStory.setError("Your story is the same!");
             disableSaveButton();
-        } else if(isGoodLocation()) {
+        } else {
             mEditTextStory.setError(null);
             enableSaveButton();
         }
     }
 
     private void checkLocation() {
-        if(isFieldEmpty(mEditTextLocation)) {
-            mEditTextLocation.setError("Where have you been?");
-            disableSaveButton();
-        } else if(isFieldTooLong(mEditTextLocation, 25)) {
+        if(isFieldTooLong(mEditTextLocation, 25)) {
             mEditTextLocation.setError("Your location must be max. 25 characters long!");
-            disableSaveButton();
-        } else if(isEdit && isSameLocation() && isSameStory()) {
-            mEditTextLocation.setError("Your location is the same!");
             disableSaveButton();
         } else if(isGoodStory()) {
             mEditTextLocation.setError(null);
@@ -250,16 +244,6 @@ public class PostEditImageActivity extends AppCompatActivity implements View.OnC
         if(isFieldEmpty(mEditTextStory)) {
             return false;
         } else if(isFieldTooLong(mEditTextStory, 100)) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    private boolean isGoodLocation() {
-        if(isFieldEmpty(mEditTextLocation)) {
-            return false;
-        } else if(isFieldTooLong(mEditTextLocation, 25)) {
             return false;
         } else {
             return true;
@@ -299,13 +283,13 @@ public class PostEditImageActivity extends AppCompatActivity implements View.OnC
     }
 
     private void disableSaveButton() {
-        mBtnSave.setEnabled(false);
-        mBtnSave.setBackground(getResources().getDrawable(R.drawable.btn_disabled_shape));
+        mBtnSave.setActivated(false);
+        mBtnSave.setBackgroundResource(R.drawable.btn_disabled_shape);
     }
 
     private void enableSaveButton() {
-        mBtnSave.setEnabled(true);
-        mBtnSave.setBackground(getResources().getDrawable(R.drawable.btn_shape));
+        mBtnSave.setActivated(true);
+        mBtnSave.setBackgroundResource(R.drawable.btn_shape);
     }
 
     @Override
@@ -321,6 +305,17 @@ public class PostEditImageActivity extends AppCompatActivity implements View.OnC
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.btn_save_post) {
+            if(v.isActivated() == false) {
+                checkStory();
+                checkLocation();
+                if(mEditTextStory.getError() != null) {
+                    mEditTextStory.requestFocus();
+                } else if(mEditTextLocation.getError() != null) {
+                    mEditTextLocation.requestFocus();
+                }
+                return ;
+            }
+
             if(isEdit == false) {
                 SharedPreferencesUtils.setString(this, "image_action",
                         "save");
