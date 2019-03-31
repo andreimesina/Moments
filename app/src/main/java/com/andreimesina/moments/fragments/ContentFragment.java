@@ -80,6 +80,12 @@ public class ContentFragment extends Fragment {
     }
 
     @Override
+    public void onStop() {
+        hideWelcome();
+        super.onStop();
+    }
+
+    @Override
     public void onDestroy() {
         mListener.remove();
         super.onDestroy();

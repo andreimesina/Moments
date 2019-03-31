@@ -194,6 +194,7 @@ public class MainActivity extends AppCompatActivity {
             SharedPreferencesUtils.deleteValue(this, "image_filename");
             SharedPreferencesUtils.deleteValue(this, "image_story");
             SharedPreferencesUtils.deleteValue(this, "image_location");
+
         } else if(imageAction.equalsIgnoreCase("cancel")) {
             SharedPreferencesUtils.deleteValue(this, "image_action");
             SharedPreferencesUtils.deleteValue(this, "image_filename");
