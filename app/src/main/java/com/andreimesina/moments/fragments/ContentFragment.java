@@ -70,6 +70,11 @@ public class ContentFragment extends Fragment {
         setFloatingActionButton(thisActivity);
 
         mGroupWelcome = getActivity().findViewById(R.id.group_welcome);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
         showWelcome();
     }
 
