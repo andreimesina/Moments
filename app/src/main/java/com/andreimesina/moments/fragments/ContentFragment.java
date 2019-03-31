@@ -124,9 +124,7 @@ public class ContentFragment extends Fragment {
                     for (DocumentChange dc : values.getDocumentChanges()) {
                         switch (dc.getType()) {
                             case ADDED:
-                                dc.getDocument().toObject(Moment.class);
-                                mMoments.add(0, dc.getDocument().toObject(Moment.class));
-
+                                addMoment(dc.getDocument().toObject(Moment.class));
                                 if(isWelcomeVisible) {
                                     hideWelcome();
                                 }
@@ -165,6 +163,10 @@ public class ContentFragment extends Fragment {
     private void hideWelcome() {
         mGroupWelcome.setVisibility(View.GONE);
         isWelcomeVisible = false;
+    }
+
+    private void addMoment(Moment moment) {
+        mMoments.add(0, moment);
     }
 
     private void updateMoment(Moment moment) {
