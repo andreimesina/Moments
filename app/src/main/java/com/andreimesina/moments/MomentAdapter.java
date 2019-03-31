@@ -1,6 +1,8 @@
 package com.andreimesina.moments;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
@@ -155,7 +157,7 @@ public class MomentAdapter extends RecyclerView.Adapter<MomentAdapter.MomentHold
                     editImage(view, currentMoment);
                     return true;
                 } else if(item.getItemId() == R.id.item_card_delete) {
-                    deleteImageFromFirebase(currentMoment);
+                    checkConfirmDelete(view, currentMoment);
                     return true;
                 }
                 return false;
@@ -175,7 +177,24 @@ public class MomentAdapter extends RecyclerView.Adapter<MomentAdapter.MomentHold
         view.getContext().startActivity(intent);
     }
 
-    private void deleteImageFromFirebase(final Moment moment) {
+    private void checkConfirmDelete(final View view, final Moment moment) {
+        new AlertDialog.Builder(view.getContext())
+                .setTitle("Delete Moment")
+                .setMessage("Are you sure you want to delete this Moment?")
+                .setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) { }
+                })
+                .setPositiveButton("YES", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        deleteImageFromFirebase(view, moment);
+                    }
+                })
+                .show();
+    }
+
+    private void deleteImageFromFirebase(final View view, final Moment moment) {
         storage.getReference("users/" + auth.getUid() + "/" +
                 auth.getCurrentUser().getDisplayName() + "/images/" + moment.getFilename())
                 .delete()
@@ -188,6 +207,8 @@ public class MomentAdapter extends RecyclerView.Adapter<MomentAdapter.MomentHold
                                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                                     @Override
                                     public void onSuccess(Void aVoid) {
+                                        Toast.makeText(view.getContext(), "Moment deleted successfully"
+                                                , Toast.LENGTH_SHORT).show();
                                         Log.d(TAG, "DocumentSnapshot successfully deleted!");
                                     }
                                 })
