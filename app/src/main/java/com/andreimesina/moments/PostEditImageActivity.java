@@ -283,13 +283,13 @@ public class PostEditImageActivity extends AppCompatActivity implements View.OnC
     }
 
     private void disableSaveButton() {
-        mBtnSave.setEnabled(false);
-        mBtnSave.setBackground(getResources().getDrawable(R.drawable.btn_disabled_shape));
+        mBtnSave.setActivated(false);
+        mBtnSave.setBackgroundResource(R.drawable.btn_disabled_shape);
     }
 
     private void enableSaveButton() {
-        mBtnSave.setEnabled(true);
-        mBtnSave.setBackground(getResources().getDrawable(R.drawable.btn_shape));
+        mBtnSave.setActivated(true);
+        mBtnSave.setBackgroundResource(R.drawable.btn_shape);
     }
 
     @Override
@@ -305,6 +305,17 @@ public class PostEditImageActivity extends AppCompatActivity implements View.OnC
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.btn_save_post) {
+            if(v.isActivated() == false) {
+                checkStory();
+                checkLocation();
+                if(mEditTextStory.getError() != null) {
+                    mEditTextStory.requestFocus();
+                } else if(mEditTextLocation.getError() != null) {
+                    mEditTextLocation.requestFocus();
+                }
+                return ;
+            }
+
             if(isEdit == false) {
                 SharedPreferencesUtils.setString(this, "image_action",
                         "save");
