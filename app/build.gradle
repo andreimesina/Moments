@@ -3,7 +3,7 @@ apply plugin: 'com.android.application'
 // app version
 ext.majorVersion = 1
 ext.minorVersion = 3
-ext.patchVersion = 4
+ext.patchVersion = 5
 
 // sdk and tools
 ext.minSdkVersion = 21
