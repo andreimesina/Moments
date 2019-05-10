@@ -49,6 +49,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -276,6 +277,10 @@ public class MainActivity extends AppCompatActivity {
             user.put("name", mUser.getDisplayName());
         }
         user.put("email", mUser.getEmail());
+
+        Timestamp timestamp = Timestamp.now();
+        //TODO: add create date for user
+        //Toast.makeText(this, timestamp.toDate()+ " ", Toast.LENGTH_LONG).show();
 
         mFirestore.collection("users").document(mAuth.getUid())
                 .set(user, SetOptions.merge());
