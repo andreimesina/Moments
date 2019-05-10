@@ -47,7 +47,8 @@ public class ContentFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.content, container, false);
 
         mMoments = new ArrayList<>();
@@ -70,6 +71,11 @@ public class ContentFragment extends Fragment {
         setFloatingActionButton(thisActivity);
 
         mGroupWelcome = getActivity().findViewById(R.id.group_welcome);
+        if(mAdapter.getItemCount() == 0) {
+            showWelcome();
+        } else {
+            hideWelcome();
+        }
     }
 
     @Override
@@ -124,6 +130,7 @@ public class ContentFragment extends Fragment {
                         switch (dc.getType()) {
                             case ADDED:
                                 addMoment(dc.getDocument().toObject(Moment.class));
+                                hideWelcome();
                                 break;
                             case MODIFIED:
                                 updateMoment(dc.getDocument().toObject(Moment.class));
@@ -135,12 +142,6 @@ public class ContentFragment extends Fragment {
                     }
 
                     mAdapter.notifyDataSetChanged();
-
-                    if(mAdapter.getItemCount() == 0) {
-                        showWelcome();
-                    } else {
-                        hideWelcome();
-                    }
 
                     Handler handler = new Handler();
                     handler.postDelayed(new Runnable() {
