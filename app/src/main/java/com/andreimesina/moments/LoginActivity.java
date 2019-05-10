@@ -300,11 +300,7 @@ public class LoginActivity extends AppCompatActivity {
                         && keyCode == KeyEvent.KEYCODE_ENTER
                         && mBtnSignIn.isEnabled()) {
 
-                    if(email.equalsIgnoreCase("admin") && pass.equalsIgnoreCase("123")) {
-                        ActivityUtils.goToActivity(LoginActivity.this, MainActivity.class);
-                    } else {
-                        signInWithEmailAndPass(email, pass);
-                    }
+                    signInWithEmailAndPass(email, pass);
 
                     return true;
                 }
