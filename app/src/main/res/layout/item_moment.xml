@@ -13,7 +13,7 @@
         android:id="@+id/layout_card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="4dp">
+        android:paddingBottom="8dp">
 
         <ImageButton
             android:id="@+id/btn_overflow_card"
@@ -41,9 +41,9 @@
             android:id="@+id/text_story_card"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:layout_marginTop="4dp"
-            android:layout_marginEnd="4dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
             android:textAlignment="viewStart"
             android:textAppearance="@style/TextAppearance.AppCompat"
             android:textColor="@color/colorTextSecondary"
@@ -51,15 +51,15 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/image_preview_card"
-            tools:text="Story: test" />
+            tools:text="Test story" />
 
         <TextView
             android:id="@+id/text_location_card"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
+            android:layout_marginStart="8dp"
             android:layout_marginTop="4dp"
-            android:layout_marginEnd="4dp"
+            android:layout_marginEnd="8dp"
             android:ellipsize="end"
             android:maxLines="1"
             android:textAlignment="viewStart"
@@ -67,7 +67,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/text_story_card"
-            tools:text="Location: test" />
+            tools:text="Test location" />
 
     </android.support.constraint.ConstraintLayout>
 

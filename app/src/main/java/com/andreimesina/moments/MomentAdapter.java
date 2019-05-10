@@ -69,14 +69,14 @@ public class MomentAdapter extends RecyclerView.Adapter<MomentAdapter.MomentHold
         String location = currentMoment.getLocation();
 
         if(story.length() > 0) {
-            textViewStory.setText("Story: " + currentMoment.getStory());
+            textViewStory.setText(currentMoment.getStory());
         } else {
             textViewStory.setText("No story");
         }
 
         if(location.length() > 0) {
             textViewLocation.setVisibility(View.VISIBLE);
-            textViewLocation.setText("Location: " + currentMoment.getLocation());
+            textViewLocation.setText(currentMoment.getLocation());
         } else {
             textViewLocation.setVisibility(View.GONE);
         }
