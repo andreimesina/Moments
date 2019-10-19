@@ -71,23 +71,19 @@ public class ContentFragment extends Fragment {
         setFloatingActionButton(thisActivity);
 
         mGroupWelcome = getActivity().findViewById(R.id.group_welcome);
-        if(mAdapter.getItemCount() == 0) {
-            showWelcome();
-        } else {
-            hideWelcome();
-        }
+        showWelcomeIfNoMoments();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        showWelcome();
+        showWelcomeIfNoMoments();
     }
 
     @Override
-    public void onStop() {
+    public void onPause() {
         hideWelcome();
-        super.onStop();
+        super.onPause();
     }
 
     @Override
@@ -158,8 +154,10 @@ public class ContentFragment extends Fragment {
         activity.findViewById(R.id.fab_add_image).setVisibility(View.VISIBLE);
     }
 
-    private void showWelcome() {
-        mGroupWelcome.setVisibility(View.VISIBLE);
+    private void showWelcomeIfNoMoments() {
+        if(mAdapter.getItemCount() < 1) {
+            mGroupWelcome.setVisibility(View.VISIBLE);
+        }
     }
 
     private void hideWelcome() {
