@@ -81,9 +81,9 @@ public class ContentFragment extends Fragment {
     }
 
     @Override
-    public void onPause() {
+    public void onStop() {
         hideWelcome();
-        super.onPause();
+        super.onStop();
     }
 
     @Override
