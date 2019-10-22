@@ -2,4 +2,12 @@
 <resources>
     <dimen name="nav_header_height">192dp</dimen>
     <dimen name="nav_profile_img_dimens">104dp</dimen>
+
+    <!-- Margins DP -->
+    <dimen name="margin_8">8dp</dimen>
+    <dimen name="margin_16">16dp</dimen>
+    <dimen name="margin_24">24dp</dimen>
+    <dimen name="margin_32">32dp</dimen>
+    <dimen name="margin_40">40dp</dimen>
+    <dimen name="margin_48">48dp</dimen>
 </resources>
